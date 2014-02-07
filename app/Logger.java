@@ -112,16 +112,17 @@ public class Logger {
 				System.out.println("*** Ordered Messages ***");
 				Collections.sort(allMsg);
 				TimeStampedMessage prev = allMsg.get(0);
-				System.out.println(prev.toString());
+				System.out.print(prev.toString());
 				for (int i = 1; i < allMsg.size(); i++) {
 					TimeStampedMessage curr = allMsg.get(i);
 					if (curr.compareTo(prev) == 0) {
-						System.out.println(" || " + curr.toString());
+						System.out.print(" || " + curr.toString());
 					} else if (curr.compareTo(prev) != 0) {
-						System.out.println("\n" + curr.toString());
+						System.out.print("\n" + curr.toString());
 					}
 					prev = curr;
 				}
+				System.out.println();
 				msgLock.unlock();
 			} else if (cmd.equals(QUIT_CMD)) {
 				scanner.close();
