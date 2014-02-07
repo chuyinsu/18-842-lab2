@@ -41,16 +41,19 @@ public class ConfigurationParser {
 		private ArrayList<HashMap<String, Object>> sendRules;
 		private ArrayList<HashMap<String, Object>> receiveRules;
 		private int localNodeId;
+		private ArrayList<HashMap<String, Object>> groups;
 
 		public ConfigInfo(HashMap<String, Contact> contactMap,
 				ClockService.ClockType type,
 				ArrayList<HashMap<String, Object>> sendRules,
-				ArrayList<HashMap<String, Object>> receiveRules, int localNodeId) {
+				ArrayList<HashMap<String, Object>> receiveRules,
+				int localNodeId, ArrayList<HashMap<String, Object>> groups) {
 			this.contactMap = contactMap;
 			this.type = type;
 			this.sendRules = sendRules;
 			this.receiveRules = receiveRules;
 			this.localNodeId = localNodeId;
+			this.groups = groups;
 		}
 
 		public HashMap<String, Contact> getContactMap() {
@@ -72,6 +75,10 @@ public class ConfigurationParser {
 		public int getLocalNodeId() {
 			return localNodeId;
 		}
+
+		public ArrayList<HashMap<String, Object>> getGroups() {
+			return groups;
+		}
 	}
 
 	// constants in the configuration file
@@ -82,13 +89,9 @@ public class ConfigurationParser {
 	private static final String CLOCK_SERVICE_TYPE = "clockService";
 	private static final String CLOCK_SERVICE_LOGICAL = "logical";
 	private static final String CLOCK_SERVICE_VECTOR = "vector";
-
 	private static final String ITEM_SEND_RULES = "sendRules";
 	private static final String ITEM_RECEIVE_RULES = "receiveRules";
-
-	// private static final String ITEM_GROUP = "groups";
-	// private static final String GROUP_NAME = "name";
-	// private static final String GROUP_MEMBER = "members";
+	private static final String ITEM_GROUP = "groups";
 
 	private String ETag;
 	private HttpURLConnection connection;
@@ -202,6 +205,7 @@ public class ConfigurationParser {
 		ArrayList<HashMap<String, Object>> sendRules = new ArrayList<HashMap<String, Object>>();
 		ArrayList<HashMap<String, Object>> receiveRules = new ArrayList<HashMap<String, Object>>();
 		int localNodeId = 0;
+		ArrayList<HashMap<String, Object>> groups = new ArrayList<HashMap<String, Object>>();
 
 		for (Map.Entry<String, ArrayList<HashMap<String, Object>>> entry : yamlMap
 				.entrySet()) {
@@ -247,6 +251,8 @@ public class ConfigurationParser {
 				System.out.println("local node ID: " + localNodeId);
 				System.out.println("total number of nodes: "
 						+ contactMap.size());
+			} else if (entry.getKey().equals(ITEM_GROUP)) {
+				groups = entry.getValue();
 			} else if (entry.getKey().equals(ITEM_SEND_RULES)) {
 				sendRules = entry.getValue();
 			} else if (entry.getKey().equals(ITEM_RECEIVE_RULES)) {
@@ -259,6 +265,6 @@ public class ConfigurationParser {
 		}
 
 		return new ConfigInfo(contactMap, type, sendRules, receiveRules,
-				localNodeId);
+				localNodeId, groups);
 	}
 }
