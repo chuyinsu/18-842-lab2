@@ -14,7 +14,6 @@ import java.util.Arrays;
 public class TimeStamp implements Serializable, Comparable<TimeStamp> {
 
 	// DEFAULT - cannot determine the relationship
-	// e.g. when the clock service type is invalid
 	public enum RelationShip {
 		BEFORE, AFTER, CONCURRENT, SAME, DEFAULT
 	}
@@ -52,7 +51,7 @@ public class TimeStamp implements Serializable, Comparable<TimeStamp> {
 	 * @param timeStamp
 	 *            The time stamp to copy over.
 	 */
-	protected TimeStamp(TimeStamp timeStamp) {
+	public TimeStamp(TimeStamp timeStamp) {
 		this.type = timeStamp.type;
 		this.localNodeId = timeStamp.localNodeId;
 		this.logical = timeStamp.logical;
@@ -67,11 +66,6 @@ public class TimeStamp implements Serializable, Comparable<TimeStamp> {
 	 * time stamp should remain static (such a time stamp in a received
 	 * message), this method should only be used to update the local time stamp
 	 * when needed.
-	 * 
-	 * @param type
-	 *            The type of the clock service.
-	 * @param index
-	 *            The index of the vector clock.
 	 */
 	protected void advance() {
 		if (type == ClockService.ClockType.LOGICAL) {

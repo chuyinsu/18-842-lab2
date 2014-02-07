@@ -101,14 +101,18 @@ public class ConfigurationParser {
 	/**
 	 * Download configuration file at a given URL and save to a given file name.
 	 * 
+	 * @param serverConfigurationFileName
+	 *            The configuration file name on Dropbox.
 	 * @param localConfigurationFileName
 	 *            The local file name to save to.
 	 * @return True on downloading new configuration file, false otherwise (only
 	 *         download the file if ETag has changed).
 	 */
-	public boolean downloadConfigurationFile(String localConfigurationFileName) {
-		String configurationFileURL = "https://dl.dropboxusercontent.com/s/cxk7aexjpnq2aor/"
-				+ localConfigurationFileName + "?dl=1";
+	public boolean downloadConfigurationFile(
+			String serverConfigurationFileName,
+			String localConfigurationFileName) {
+		String configurationFileURL = "https://dl.dropboxusercontent.com/s/h2z8zxpwshwotks/"
+				+ serverConfigurationFileName + "?dl=1";
 		BufferedInputStream bis = null;
 		BufferedOutputStream bos = null;
 		boolean configChanged = false;
@@ -197,6 +201,7 @@ public class ConfigurationParser {
 		ClockService.ClockType type = ClockService.ClockType.DEFAULT;
 		ArrayList<HashMap<String, Object>> sendRules = new ArrayList<HashMap<String, Object>>();
 		ArrayList<HashMap<String, Object>> receiveRules = new ArrayList<HashMap<String, Object>>();
+		int localNodeId = 0;
 
 		for (Map.Entry<String, ArrayList<HashMap<String, Object>>> entry : yamlMap
 				.entrySet()) {
@@ -226,6 +231,22 @@ public class ConfigurationParser {
 							+ " does not exist in the configuration file");
 					return null;
 				}
+				// calculate local node ID
+				PriorityQueue<String> heap = new PriorityQueue<String>();
+				for (String s : contactMap.keySet()) {
+					heap.add(s);
+				}
+				while (!heap.isEmpty()) {
+					String name = heap.poll();
+					if (name.equals(localName)) {
+						break;
+					} else {
+						localNodeId++;
+					}
+				}
+				System.out.println("local node ID: " + localNodeId);
+				System.out.println("total number of nodes: "
+						+ contactMap.size());
 			} else if (entry.getKey().equals(ITEM_SEND_RULES)) {
 				sendRules = entry.getValue();
 			} else if (entry.getKey().equals(ITEM_RECEIVE_RULES)) {
@@ -236,23 +257,6 @@ public class ConfigurationParser {
 			is.close();
 		} catch (IOException ex) {
 		}
-
-		// calculate local node ID
-		int localNodeId = 0;
-		PriorityQueue<String> heap = new PriorityQueue<String>();
-		for (String s : contactMap.keySet()) {
-			heap.add(s);
-		}
-		while (!heap.isEmpty()) {
-			String name = heap.poll();
-			if (name.equals(localName)) {
-				break;
-			} else {
-				localNodeId++;
-			}
-		}
-		System.out.println("local node ID: " + localNodeId);
-		System.out.println("total number of nodes: " + contactMap.size());
 
 		return new ConfigInfo(contactMap, type, sendRules, receiveRules,
 				localNodeId);

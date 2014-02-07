@@ -41,12 +41,12 @@ public abstract class ClockService {
 	/**
 	 * This method must be called before using.
 	 * 
-	 * @param dimension
+	 * @param d
 	 *            The dimension of the vector clock, i.e. the number of nodes in
 	 *            the distributed system.
-	 * @param type
+	 * @param t
 	 *            The type of this clock service.
-	 * @param localNodeId
+	 * @param id
 	 *            The id of the local node, which is used as the index into the
 	 *            vector clock.
 	 */

@@ -20,7 +20,8 @@ import clock.TimeStamp;
  */
 public class ControlPanel {
 	private static final int NUM_CMD_ARG = 2;
-	private static final String USAGE = "usage: java -cp :snakeyaml-1.11.jar app/ControlPanel <configuration_file_name> <local_name>";
+	private static final String USAGE = "usage: java -cp :snakeyaml-1.11.jar app/ControlPanel "
+			+ "<configuration_file_name> <local_name>";
 
 	private static final String HELP_CMD = "help";
 	private static final String HELP_CONTENT = "send <process_name> <kind> <message>\n"
@@ -49,8 +50,7 @@ public class ControlPanel {
 	private class Receiver implements Runnable {
 		public void run() {
 			while (true) {
-				TimeStampedMessage message = (TimeStampedMessage) (messagePasser
-						.receive());
+				TimeStampedMessage message = messagePasser.receive();
 				System.out.println("message delivered to local node - "
 						+ message.toString());
 			}
@@ -72,7 +72,8 @@ public class ControlPanel {
 
 		// retrieve configurations
 		ConfigurationParser cp = new ConfigurationParser();
-		if (!cp.downloadConfigurationFile(configurationFileName)) {
+		if (!cp.downloadConfigurationFile(configurationFileName,
+				configurationFileName)) {
 			System.exit(-1);
 		}
 		ConfigInfo ci = cp.yamlExtraction(configurationFileName, true,
@@ -82,9 +83,10 @@ public class ControlPanel {
 		}
 
 		// create MessagePasser and ClockService instances
-		messagePasser = new MessagePasser(configurationFileName, localName, ci);
 		ClockService.initialize(ci.getContactMap().size(), ci.getType(),
 				ci.getLocalNodeId());
+		messagePasser = new MessagePasser(configurationFileName, localName, ci,
+				cp);
 
 		receiver = new Receiver();
 		receiverThread = new Thread(receiver);
@@ -92,7 +94,7 @@ public class ControlPanel {
 
 		Scanner scanner = new Scanner(System.in);
 		while (true) {
-			System.out.print("DS_Lab1>> ");
+			System.out.print("DS_Lab2>> ");
 			String cmd = scanner.nextLine();
 			if (cmd.equals(HELP_CMD)) {
 				System.out.println(HELP_CONTENT);

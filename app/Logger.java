@@ -22,7 +22,8 @@ import clock.TimeStamp;
  */
 public class Logger {
 	private static final int NUM_CMD_ARG = 2;
-	private static final String USAGE = "usage: java -cp :snakeyaml-1.11.jar app/Logger <configuration_file_name> <local_name>";
+	private static final String USAGE = "usage: java -cp :snakeyaml-1.11.jar app/Logger "
+			+ "<configuration_file_name> <local_name>";
 
 	private static final String HELP_CMD = "help";
 	private static final String HELP_CONTENT = "dump - display message relationships and order the messages\n"
@@ -44,8 +45,7 @@ public class Logger {
 
 		public void run() {
 			while (true) {
-				TimeStampedMessage tsm = (TimeStampedMessage) messagePasser
-						.receive();
+				TimeStampedMessage tsm = messagePasser.receive();
 				msgLock.lock();
 				allMsg.add(tsm);
 				msgLock.unlock();
@@ -65,7 +65,8 @@ public class Logger {
 	 */
 	public void startLogger(String configurationFileName, String localName) {
 		ConfigurationParser cp = new ConfigurationParser();
-		if (!cp.downloadConfigurationFile(configurationFileName)) {
+		if (!cp.downloadConfigurationFile(configurationFileName,
+				configurationFileName)) {
 			System.exit(-1);
 		}
 		ConfigInfo ci = cp.yamlExtraction(configurationFileName, true,
@@ -73,9 +74,11 @@ public class Logger {
 		if (ci == null) {
 			System.exit(-1);
 		}
-		messagePasser = new MessagePasser(configurationFileName, localName, ci);
+
 		ClockService.initialize(ci.getContactMap().size(), ci.getType(),
 				ci.getLocalNodeId());
+		messagePasser = new MessagePasser(configurationFileName, localName, ci,
+				cp);
 
 		LoggerWorker lw = new LoggerWorker();
 		Thread lwThread = new Thread(lw);
@@ -87,8 +90,12 @@ public class Logger {
 			String cmd = scanner.nextLine();
 			if (cmd.equals(HELP_CMD)) {
 				System.out.println(HELP_CONTENT);
-			} else if (cmd.startsWith(DUMP_CMD)) {
+			} else if (cmd.equals(DUMP_CMD)) {
 				msgLock.lock();
+				if (allMsg.isEmpty()) {
+					msgLock.unlock();
+					continue;
+				}
 				System.out.println("*** Message Relationships ***");
 				for (int i = 0; i < allMsg.size() - 1; i++) {
 					for (int j = i + 1; j < allMsg.size(); j++) {
@@ -96,8 +103,10 @@ public class Logger {
 						TimeStampedMessage m2 = allMsg.get(j);
 						TimeStamp.RelationShip r = m1.getTimeStamp().compare(
 								m2.getTimeStamp());
-						System.out.println(m1.toString() + " *" + r.name()
-								+ "* " + m2.toString());
+						System.out
+								.println(m1.toString() + " *"
+										+ r.name().toUpperCase() + "* "
+										+ m2.toString());
 					}
 				}
 				System.out.println("*** Ordered Messages ***");

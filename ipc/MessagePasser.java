@@ -44,10 +44,10 @@ public class MessagePasser {
 	private static final String ACTION_DELAY = "delay";
 
 	private String localName;
-	private String localConfigurationFileName;
+	private String configurationFileName;
 
-	private LinkedBlockingQueue<Message> sendBuffer;
-	private LinkedBlockingQueue<Message> receiveBuffer;
+	private LinkedBlockingQueue<TimeStampedMessage> sendBuffer;
+	private LinkedBlockingQueue<TimeStampedMessage> receiveBuffer;
 
 	// maps from remote node names to their contact information (IP and port)
 	private HashMap<String, Contact> contactMap;
@@ -85,8 +85,8 @@ public class MessagePasser {
 		private static final String TEMP_CONFIG_SUFFIX = ".new";
 		private ConfigurationParser cp;
 
-		public Watcher() {
-			this.cp = new ConfigurationParser();
+		public Watcher(ConfigurationParser cp) {
+			this.cp = cp;
 		}
 
 		public void run() {
@@ -95,16 +95,16 @@ public class MessagePasser {
 					Thread.sleep(CONFIG_CHANGE_CHECK_INTERVAL);
 				} catch (InterruptedException ex) {
 				}
-				if (cp.downloadConfigurationFile(localConfigurationFileName
-						+ TEMP_CONFIG_SUFFIX)) {
+				if (cp.downloadConfigurationFile(configurationFileName,
+						configurationFileName + TEMP_CONFIG_SUFFIX)) {
 					System.out.println("new configuration file detected");
-					File localConfigFile = new File(localConfigurationFileName);
+					File localConfigFile = new File(configurationFileName);
 					localConfigFile.delete();
-					File tempConfigFile = new File(localConfigurationFileName
+					File tempConfigFile = new File(configurationFileName
 							+ TEMP_CONFIG_SUFFIX);
 					tempConfigFile.renameTo(localConfigFile);
-					ConfigInfo ci = cp.yamlExtraction(
-							localConfigurationFileName, false, localName);
+					ConfigInfo ci = cp.yamlExtraction(configurationFileName,
+							false, localName);
 					rulesLock.lock();
 					sendRules = ci.getSendRules();
 					receiveRules = ci.getReceiveRules();
@@ -130,10 +130,10 @@ public class MessagePasser {
 	 * 
 	 */
 	private class Sender implements Runnable {
-		private LinkedBlockingQueue<Message> delayBuffer;
+		private LinkedBlockingQueue<TimeStampedMessage> delayBuffer;
 
 		public Sender() {
-			this.delayBuffer = new LinkedBlockingQueue<Message>();
+			this.delayBuffer = new LinkedBlockingQueue<TimeStampedMessage>();
 		}
 
 		public void run() {
@@ -142,7 +142,7 @@ public class MessagePasser {
 			}
 			while (true) {
 				try {
-					Message message = sendBuffer.take();
+					TimeStampedMessage message = sendBuffer.take();
 					Socket clientSocket = null;
 					String dest = message.getDest();
 
@@ -184,19 +184,21 @@ public class MessagePasser {
 						}
 						clearDelayBuffer(clientSocket);
 					} else if (action.equals(ACTION_DROP)) {
-						System.out.println("drop rule matched");
+						System.out.println("send drop rule matched");
 						continue;
 					} else if (action.equals(ACTION_DELAY)) {
-						System.out.println("delay rule matched");
+						System.out.println("send delay rule matched");
 						delayBuffer.put(message);
 					} else if (action.equals(ACTION_DUPLICATE)) {
-						System.out.println("duplicate rule matched");
-						Message dup = new TimeStampedMessage(null, null, null);
+						System.out.println("send duplicate rule matched");
+						TimeStampedMessage dup = new TimeStampedMessage(null,
+								null, null);
 						dup.setDest(dest);
 						dup.setKind(message.getKind());
 						dup.setData(message.getData());
 						dup.setSource(message.getSource());
 						dup.setSequenceNumber(message.getSequenceNumber());
+						dup.setTimeStamp(message.getTimeStamp());
 						dup.setDupe(true);
 						if (!sendMessage(clientSocket, message)) {
 							System.out.println("failed to send message - "
@@ -224,7 +226,7 @@ public class MessagePasser {
 		private void clearDelayBuffer(Socket clientSocket) {
 			while (!delayBuffer.isEmpty()) {
 				try {
-					Message message = delayBuffer.take();
+					TimeStampedMessage message = delayBuffer.take();
 					if (!sendMessage(clientSocket, message)) {
 						System.out.println("failed to send message - "
 								+ message.toString());
@@ -244,7 +246,7 @@ public class MessagePasser {
 		 *            The message to send.
 		 * @return True on success, false otherwise.
 		 */
-		private boolean sendMessage(Socket socket, Message message) {
+		private boolean sendMessage(Socket socket, TimeStampedMessage message) {
 			OutputStream output = null;
 			ObjectOutputStream objectOutput = null;
 			try {
@@ -300,11 +302,11 @@ public class MessagePasser {
 	 */
 	private class Receiver implements Runnable {
 		private ReentrantLock delayBufferLock;
-		private LinkedBlockingQueue<Message> delayBuffer;
+		private LinkedBlockingQueue<TimeStampedMessage> delayBuffer;
 
 		public Receiver() {
 			this.delayBufferLock = new ReentrantLock();
-			this.delayBuffer = new LinkedBlockingQueue<Message>();
+			this.delayBuffer = new LinkedBlockingQueue<TimeStampedMessage>();
 		}
 
 		/**
@@ -325,7 +327,7 @@ public class MessagePasser {
 
 			public void run() {
 				while (true) {
-					Message message = receiveMessage(clientSocket);
+					TimeStampedMessage message = receiveMessage(clientSocket);
 
 					/*
 					 * if failed to receive messages from the socket, it is
@@ -336,9 +338,6 @@ public class MessagePasser {
 								.println("failed to receive message from socket");
 						NetTool.destroySocket(clientSocket);
 						return;
-					} else {
-						System.out.println("message received - "
-								+ message.toString());
 					}
 
 					String action = checkRules(message, receiveRules);
@@ -347,23 +346,26 @@ public class MessagePasser {
 							receiveBuffer.put(message);
 							clearDelayBuffer();
 						} else if (action.equals(ACTION_DROP)) {
-							System.out.println("drop rule matched");
+							System.out.println("receive drop rule matched");
 							continue;
 						} else if (action.equals(ACTION_DELAY)) {
-							System.out.println("delay rule matched");
+							System.out.println("receive delay rule matched");
 							delayBufferLock.lock();
 							delayBuffer.put(message);
 							delayBufferLock.unlock();
 						} else if (action.equals(ACTION_DUPLICATE)) {
-							System.out.println("duplicate rule matched");
-							Message dup = new TimeStampedMessage(null, null,
-									null);
+							System.out
+									.println("receive duplicate rule matched");
+							TimeStampedMessage dup = new TimeStampedMessage(
+									null, null, null);
 							dup.setDest(new String(message.getDest()));
 							dup.setKind(new String(message.getKind()));
 							dup.setData(message.getData());
 							dup.setSource(new String(message.getSource()));
 							dup.setSequenceNumber(message.getSequenceNumber());
 							dup.setDupe(message.isDupe());
+							dup.setTimeStamp(new TimeStamp(message
+									.getTimeStamp()));
 							receiveBuffer.put(message);
 							receiveBuffer.put(dup);
 							clearDelayBuffer();
@@ -394,7 +396,7 @@ public class MessagePasser {
 			 *            The socket to receive the message.
 			 * @return The received message, null on failure.
 			 */
-			private Message receiveMessage(Socket socket) {
+			private TimeStampedMessage receiveMessage(Socket socket) {
 				InputStream input = null;
 				ObjectInputStream objectInput = null;
 				try {
@@ -420,9 +422,10 @@ public class MessagePasser {
 					}
 					return null;
 				}
-				Message incomingMessage = null;
+				TimeStampedMessage incomingMessage = null;
 				try {
-					incomingMessage = (Message) objectInput.readObject();
+					incomingMessage = (TimeStampedMessage) objectInput
+							.readObject();
 				} catch (Exception ex) {
 					System.err.println("failed to get incoming message - "
 							+ ex.getMessage());
@@ -471,12 +474,12 @@ public class MessagePasser {
 		}
 	}
 
-	public MessagePasser(String localConfigurationFileName, String localName,
-			ConfigInfo configInfo) {
+	public MessagePasser(String configurationFileName, String localName,
+			ConfigInfo configInfo, ConfigurationParser cp) {
 		this.localName = localName;
-		this.localConfigurationFileName = localConfigurationFileName;
-		this.sendBuffer = new LinkedBlockingQueue<Message>();
-		this.receiveBuffer = new LinkedBlockingQueue<Message>();
+		this.configurationFileName = configurationFileName;
+		this.sendBuffer = new LinkedBlockingQueue<TimeStampedMessage>();
+		this.receiveBuffer = new LinkedBlockingQueue<TimeStampedMessage>();
 		this.contactMap = configInfo.getContactMap();
 		this.socketMap = new HashMap<String, Socket>();
 		this.seqNum = 1;
@@ -484,7 +487,7 @@ public class MessagePasser {
 		this.rulesLock = new ReentrantLock();
 		this.sendRules = configInfo.getSendRules();
 		this.receiveRules = configInfo.getReceiveRules();
-		this.watcher = new Watcher();
+		this.watcher = new Watcher(cp);
 		this.sender = new Sender();
 		this.receiver = new Receiver();
 		this.watcherThread = new Thread(watcher);
@@ -504,7 +507,7 @@ public class MessagePasser {
 	 *            The rules (send or receive) to match.
 	 * @return ACTION_DROP, ACTION_DELAY or ACTION_DUPLICATE, null on no match.
 	 */
-	private String checkRules(Message message,
+	private String checkRules(TimeStampedMessage message,
 			ArrayList<HashMap<String, Object>> rules) {
 		rulesLock.lock();
 		for (HashMap<String, Object> rule : rules) {
@@ -547,12 +550,12 @@ public class MessagePasser {
 	 *            The message to send.
 	 * @return The updated local time stamp due to this sending event.
 	 */
-	public TimeStamp send(Message message) {
+	public TimeStamp send(TimeStampedMessage message) {
 		TimeStamp ts = null;
 		try {
-			if (clockService != null && message instanceof TimeStampedMessage) {
+			if (clockService != null) {
 				ts = clockService.updateLocalTime();
-				((TimeStampedMessage) message).setTimeStamp(ts);
+				message.setTimeStamp(ts);
 			}
 			sendBuffer.put(message);
 		} catch (InterruptedException ex) {
@@ -565,15 +568,14 @@ public class MessagePasser {
 	 * 
 	 * @return The next message in the receive buffer.
 	 */
-	public Message receive() {
-		Message message = null;
+	public TimeStampedMessage receive() {
+		TimeStampedMessage message = null;
 		try {
 			message = receiveBuffer.take();
-			if (clockService != null && message instanceof TimeStampedMessage) {
-				TimeStamp ts = clockService
-						.updateLocalTime(((TimeStampedMessage) message)
-								.getTimeStamp());
-				((TimeStampedMessage) message).setTimeStamp(ts);
+			if (clockService != null) {
+				TimeStamp ts = clockService.updateLocalTime(message
+						.getTimeStamp());
+				message.setTimeStamp(ts);
 			}
 		} catch (InterruptedException ex) {
 		}
