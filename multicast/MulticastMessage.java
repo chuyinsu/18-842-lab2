@@ -24,15 +24,16 @@ public class MulticastMessage extends TimeStampedMessage {
 	// for casual ordering
 	private int[] seqVector;
 
-	public MulticastMessage(String groupName, String kind, Object data,
-			Type type) {
-		super(kind, data);
+	public MulticastMessage(String source, String groupName, String kind,
+			Object data, Type type) {
+		super(source, kind, data);
 		this.groupName = groupName;
 		this.type = type;
 		this.seqVector = null;
 	}
-	
-	public MulticastMessage(String groupName, String src, String dest, String kind, Object data, Type type, int[] seqVector) {
+
+	public MulticastMessage(String groupName, String src, String dest,
+			String kind, Object data, Type type, int[] seqVector) {
 		super(src, dest, kind, data);
 		this.groupName = groupName;
 		this.type = type;

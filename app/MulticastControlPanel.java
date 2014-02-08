@@ -111,7 +111,7 @@ public class MulticastControlPanel {
 					// 2) sequence number
 					// 3) duplication
 					// 4) time stamp
-					MulticastMessage message = new MulticastMessage(
+					MulticastMessage message = new MulticastMessage(localName,
 							parsedLine[1], parsedLine[2], parsedLine[3],
 							MulticastMessage.Type.DATA);
 
