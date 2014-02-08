@@ -52,6 +52,9 @@ public class TimeStamp implements Serializable, Comparable<TimeStamp> {
 	 *            The time stamp to copy over.
 	 */
 	public TimeStamp(TimeStamp timeStamp) {
+		if (timeStamp == null) {
+			return;
+		}
 		this.type = timeStamp.type;
 		this.localNodeId = timeStamp.localNodeId;
 		this.logical = timeStamp.logical;
