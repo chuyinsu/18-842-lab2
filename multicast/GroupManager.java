@@ -1,6 +1,5 @@
 package multicast;
 
-import ipc.Contact;
 import ipc.MessagePasser;
 
 import java.util.ArrayList;
