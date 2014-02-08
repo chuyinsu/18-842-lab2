@@ -51,6 +51,9 @@ public class CORMulticast {
 		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.localName = localName;
 		initializeGroups();
+		
+		(new Receiver()).run();
+		(new StatusChecker()).run();
 	}
 
 	@SuppressWarnings("unchecked")
