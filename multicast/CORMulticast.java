@@ -5,6 +5,7 @@ import ipc.MessagePasser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 import utils.ConfigurationParser;
 import utils.ConfigurationParser.ConfigInfo;
@@ -39,6 +40,8 @@ public class CORMulticast {
 	// deliverQueue is shared among all groups
 	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
 
+	private final ReentrantLock lock =  new ReentrantLock(); 
+	
 	public CORMulticast(String configurationFileName, String localName,
 			ConfigInfo ci, ConfigurationParser cp) {
 		this.groupData = ci.getGroups();

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 import multicast.MulticastMessage.Type;
 
@@ -20,6 +21,9 @@ public class GroupManager {
 	private ArrayList<String> members;
 	private int[] seqVector;
 	private int[] recvVector;
+	
+	private final ReentrantLock lockForReliabilityQueue =  new ReentrantLock();
+	private final ReentrantLock lockForcCasualOrderingQueue =  new ReentrantLock();
 	
 	public GroupManager(String localName, String name, int id, ArrayList<String> members, int[] seqVector) {
 		this.name = name;
@@ -77,7 +81,9 @@ public class GroupManager {
 				originalMessage);
 		// acquire a lock here!
 		try {
+			lockForReliabilityQueue.lock();
 			reliabilityQueue.put(rqElem);
+			lockForReliabilityQueue.unlock();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -103,6 +109,7 @@ public class GroupManager {
 			return;
 		}
 		
+		lockForReliabilityQueue.lock();
 		// check reliability queue 
 		RQueueElement validRQElem = null;
 		for (RQueueElement rqElem : reliabilityQueue) {
@@ -114,6 +121,7 @@ public class GroupManager {
 				break;
 			} 
 		}
+		lockForReliabilityQueue.unlock();
 		if (validRQElem == null) {
 			
 			HashSet<String> remainingNodes = new HashSet<String>();
@@ -148,10 +156,11 @@ public class GroupManager {
 				mp.send(message);
 			}
 		}
-	
+		
 	}
 
 	public void checkTimeOut(long timeout, MessagePasser mp) {
+		lockForReliabilityQueue.lock();
 		long curTime = System.currentTimeMillis();
 		for (RQueueElement rqElem : reliabilityQueue) {
 			// resend
@@ -171,6 +180,7 @@ public class GroupManager {
 				}
 			}
 		}
+		lockForReliabilityQueue.unlock();
 	}
 
 	public int[] getSeqVector() {
@@ -178,7 +188,8 @@ public class GroupManager {
 	}
 
 	public void checkReceivedMessage(HashMap<String, Integer> groupNameToId, LinkedBlockingQueue<MulticastMessage> deliverQueue) {
-	 	Iterator<RQueueElement> itrRQElem = reliabilityQueue.iterator();
+	 	lockForReliabilityQueue.lock();
+		Iterator<RQueueElement> itrRQElem = reliabilityQueue.iterator();
 	 	while (itrRQElem.hasNext()) {
 	 		RQueueElement rqElem = itrRQElem.next();
 	 		if (rqElem.getRemainingNodes().isEmpty()) {
@@ -191,7 +202,8 @@ public class GroupManager {
 				}
 			}
 	 	}
-	 	
+	 	lockForReliabilityQueue.unlock();
+	 	lockForcCasualOrderingQueue.lock();
 	 	// check casual order
 	 	Iterator<MulticastMessage> itrMessage = casualOrderingQueue.iterator();
 		while (itrMessage.hasNext()) {
@@ -208,5 +220,6 @@ public class GroupManager {
 				}
 			}
 		}
+		lockForcCasualOrderingQueue.unlock();
 	}
 }
