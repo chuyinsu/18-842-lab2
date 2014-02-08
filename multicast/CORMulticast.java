@@ -69,7 +69,7 @@ public class CORMulticast {
 			ArrayList<String> groupMembers = (ArrayList<String>) (g
 					.get(GROUP_MEMBER));
 			GroupManager groupManager = new GroupManager(localName, groupName, groupId,
-					groupMembers, new int[groupData.size()]);
+					groupMembers, new int[groupData.size()], memberNameToId);
 			groupManagers.add(groupManager);
 			nameToManager.put(groupName, groupManager);
 			groupNameToId.put(groupName, groupId);
@@ -132,7 +132,7 @@ public class CORMulticast {
 			while (true) {
 				// need acquire a lock for gms?
 				for (GroupManager gm : groupManagers) {
-					gm.checkReceivedMessage(groupNameToId, deliverQueue);
+					gm.checkReceivedMessage(deliverQueue);
 					gm.checkTimeOut(timeout, messagePasser);
 				}
 			}
