@@ -7,6 +7,10 @@ public class TimeStampedMessage extends Message implements
 	private static final long serialVersionUID = -5908777442179653889L;
 	private TimeStamp timeStamp;
 
+	public TimeStampedMessage(String kind, Object data) {
+		super(kind, data);
+	}
+
 	public TimeStampedMessage(String dest, String kind, Object data) {
 		super(dest, kind, data);
 		this.timeStamp = null;

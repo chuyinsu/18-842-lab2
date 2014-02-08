@@ -10,7 +10,6 @@ public class GroupManager {
 	private String name;
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
 	private LinkedBlockingQueue<MulticastMessage> casualOrderingQueue;
-	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
 	private ArrayList<String> members;
 
 	public GroupManager(int id, String name, ArrayList<String> members) {
@@ -18,8 +17,6 @@ public class GroupManager {
 		this.name = name;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
-		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
-
 	}
 
 	public int getId() {
@@ -54,15 +51,6 @@ public class GroupManager {
 	public void setCasualOrderingQueue(
 			LinkedBlockingQueue<MulticastMessage> casualOrderingQueue) {
 		this.casualOrderingQueue = casualOrderingQueue;
-	}
-
-	public LinkedBlockingQueue<MulticastMessage> getDeliverQueue() {
-		return deliverQueue;
-	}
-
-	public void setDeliverQueue(
-			LinkedBlockingQueue<MulticastMessage> deliverQueue) {
-		this.deliverQueue = deliverQueue;
 	}
 
 	public void send(MulticastMessage message, MessagePasser mp) {
