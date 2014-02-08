@@ -16,6 +16,11 @@ public class TimeStampedMessage extends Message implements
 		this.timeStamp = null;
 	}
 
+	public TimeStampedMessage(String src, String dest, String kind, Object data) {
+		super(src, dest, kind, data);
+		this.timeStamp = null;
+	}
+
 	public TimeStamp getTimeStamp() {
 		return timeStamp;
 	}

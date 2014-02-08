@@ -31,6 +31,13 @@ public class MulticastMessage extends TimeStampedMessage {
 		this.type = type;
 		this.seqVector = null;
 	}
+	
+	public MulticastMessage(String groupName, String src, String dest, String kind, Object data, Type type, int[] seqVector) {
+		super(src, dest, kind, data);
+		this.groupName = groupName;
+		this.type = type;
+		this.seqVector = seqVector;
+	}
 
 	public MulticastMessage(MulticastMessage message) {
 		super(message.getDest(), message.getKind(), message.getData());

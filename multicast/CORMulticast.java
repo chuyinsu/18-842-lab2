@@ -5,6 +5,7 @@ import ipc.MessagePasser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.locks.ReentrantLock;
 
 import utils.ConfigurationParser;
 import utils.ConfigurationParser.ConfigInfo;
@@ -22,7 +23,7 @@ import utils.ConfigurationParser.ConfigInfo;
 public class CORMulticast {
 	private static final String GROUP_NAME = "name";
 	private static final String GROUP_MEMBER = "members";
-
+	private static final long timeout = 10 * 1000;
 	// each group is represented as a HashMap, inside which key GROUP_NAME has
 	// the group's name as a String value, key GROUP_MEMBER has the group's
 	// members as an ArrayList<String> value
@@ -31,19 +32,28 @@ public class CORMulticast {
 	// the multicast infrastructure is built upon MessagePasser
 	private MessagePasser messagePasser;
 
-	private ArrayList<GroupManager> groups;
+	private HashMap<String, GroupManager> nameToManager;
+	private HashMap<String, Integer> groupNameToId;
+	private ArrayList<GroupManager> groupManagers;
 
+	private String localName;
 	// deliverQueue is shared among all groups
 	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
 
+	private final ReentrantLock lock =  new ReentrantLock(); 
+	
 	public CORMulticast(String configurationFileName, String localName,
 			ConfigInfo ci, ConfigurationParser cp) {
 		this.groupData = ci.getGroups();
 		this.messagePasser = new MessagePasser(configurationFileName,
 				localName, ci, cp);
-		this.groups = new ArrayList<GroupManager>();
+		this.groupManagers = new ArrayList<GroupManager>();
 		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
+		this.localName = localName;
 		initializeGroups();
+		
+		(new Receiver()).run();
+		(new StatusChecker()).run();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -53,21 +63,65 @@ public class CORMulticast {
 			String groupName = (String) g.get(GROUP_NAME);
 			ArrayList<String> groupMembers = (ArrayList<String>) (g
 					.get(GROUP_MEMBER));
-			GroupManager group = new GroupManager(groupId++, groupName,
-					groupMembers);
-			groups.add(group);
+			GroupManager groupManager = new GroupManager(localName, groupName, groupId,
+					groupMembers, new int[groupData.size()]);
+			groupManagers.add(groupManager);
+			nameToManager.put(groupName, groupManager);
+			groupNameToId.put(groupName, groupId);
+			groupId++;
 		}
 	}
-
+	
 	public void send(MulticastMessage message) {
 		// send a message to a group
-		for (GroupManager g : groups) {
-			g.send(message, this.messagePasser);
+		String groupName = message.getGroupName();
+		if (nameToManager.containsKey(groupName)) {
+			nameToManager.get(groupName).send(message, this.messagePasser);
+		} else {
+			System.out.println("Group Name:" + groupName + " does not exist!");
 		}
 	}
 
 	public MulticastMessage receive() {
 		// receive a message from deliverQueue
-		return null;
+		// acquire lock here
+		try {
+			return this.deliverQueue.take();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	class Receiver implements Runnable {
+		
+		@Override
+		public void run() {
+			while (true) {
+				// need acquire a lock for mp?
+				MulticastMessage message = (MulticastMessage)messagePasser.receive();
+				String groupName = message.getGroupName();
+				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager.get(groupName) : null;
+				if (gm != null) {
+					gm.checkReliabilityQueue(message, messagePasser);
+				}
+			}
+		}
+		
+	}
+	
+	class StatusChecker implements Runnable {
+		
+		@Override
+		public void run() {
+			while (true) {
+				// need acquire a lock for gms?
+				for (GroupManager gm : groupManagers) {
+					gm.checkReceivedMessage(groupNameToId, deliverQueue);
+					gm.checkTimeOut(timeout, messagePasser);
+				}
+			}
+		}
+		
 	}
 }
