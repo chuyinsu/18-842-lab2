@@ -4,7 +4,9 @@ import ipc.MessagePasser;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import multicast.MulticastMessage.Type;
@@ -17,6 +19,7 @@ public class GroupManager {
 	private LinkedBlockingQueue<MulticastMessage> casualOrderingQueue;
 	private ArrayList<String> members;
 	private int[] seqVector;
+	private int[] recvVector;
 	
 	public GroupManager(String localName, String name, int id, ArrayList<String> members, int[] seqVector) {
 		this.name = name;
@@ -24,6 +27,7 @@ public class GroupManager {
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.seqVector = seqVector;
+		this.recvVector = Arrays.copyOf(seqVector, seqVector.length);
 		this.id = id;
 	}
 
@@ -173,17 +177,36 @@ public class GroupManager {
 		return seqVector;
 	}
 
-	public void checkReceivedMessage() {
-		for (RQueueElement rqElem : reliabilityQueue) {
-			if (rqElem.getRemainingNodes().isEmpty()) {
+	public void checkReceivedMessage(HashMap<String, Integer> groupNameToId, LinkedBlockingQueue<MulticastMessage> deliverQueue) {
+	 	Iterator<RQueueElement> itrRQElem = reliabilityQueue.iterator();
+	 	while (itrRQElem.hasNext()) {
+	 		RQueueElement rqElem = itrRQElem.next();
+	 		if (rqElem.getRemainingNodes().isEmpty()) {
 				try {
 					casualOrderingQueue.put(rqElem.getMessage());
+					itrRQElem.remove();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+	 	}
+	 	
+	 	// check casual order
+	 	Iterator<MulticastMessage> itrMessage = casualOrderingQueue.iterator();
+		while (itrMessage.hasNext()) {
+			MulticastMessage message = itrMessage.next();
+			int sourceGroupId = groupNameToId.get(message.getSource());
+			if (message.getSeqVector()[sourceGroupId] == recvVector[sourceGroupId] + 1) {
+				recvVector[sourceGroupId]++;
+				try {
+					deliverQueue.put(message);
+					itrMessage.remove();
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
 		}
-		// check casual order
 	}
 }

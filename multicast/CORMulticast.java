@@ -32,6 +32,7 @@ public class CORMulticast {
 	private MessagePasser messagePasser;
 
 	private HashMap<String, GroupManager> nameToManager;
+	private HashMap<String, Integer> groupNameToId;
 	private ArrayList<GroupManager> groupManagers;
 
 	private String localName;
@@ -56,10 +57,12 @@ public class CORMulticast {
 			String groupName = (String) g.get(GROUP_NAME);
 			ArrayList<String> groupMembers = (ArrayList<String>) (g
 					.get(GROUP_MEMBER));
-			GroupManager groupManager = new GroupManager(localName, groupName, groupId++,
+			GroupManager groupManager = new GroupManager(localName, groupName, groupId,
 					groupMembers, new int[groupData.size()]);
 			groupManagers.add(groupManager);
 			nameToManager.put(groupName, groupManager);
+			groupNameToId.put(groupName, groupId);
+			groupId++;
 		}
 	}
 	
@@ -108,7 +111,7 @@ public class CORMulticast {
 			while (true) {
 				// need acquire a lock for gms?
 				for (GroupManager gm : groupManagers) {
-					gm.checkReceivedMessage();
+					gm.checkReceivedMessage(groupNameToId, deliverQueue);
 					gm.checkTimeOut(timeout, messagePasser);
 				}
 			}
