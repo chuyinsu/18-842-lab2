@@ -20,6 +20,11 @@ public class Message implements Serializable {
 	private int sequenceNumber;
 	private boolean dupe;
 
+	public Message(String kind, Object data) {
+		this.kind = kind;
+		this.data = data;
+	}
+
 	public Message(String dest, String kind, Object data) {
 		this.dest = dest;
 		this.kind = kind;

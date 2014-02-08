@@ -7,22 +7,34 @@ import java.util.Arrays;
 public class MulticastMessage extends TimeStampedMessage {
 	private static final long serialVersionUID = -6266905058526960435L;
 
+	public enum Type {
+		DATA, ACK, INQUIRE, CONFIRM
+	}
+
 	// which group this message belongs to
-	private int groupId;
+	private String groupName;
+
+	// message type
+	// 1) DATA: original multicast data
+	// 2) ACK: the first ack with data
+	// 3) INQUIRE: to inquire a missing data/ack
+	// 4) CONFIRM: confirm the reception of a data/ack
+	private Type type;
 
 	// for casual ordering
 	private int[] seqVector;
 
-	public MulticastMessage(String dest, String kind, Object data, int groupId,
-			int[] seqVector) {
-		super(dest, kind, data);
-		this.groupId = groupId;
-		this.seqVector = seqVector;
+	public MulticastMessage(String groupName, String kind, Object data,
+			Type type) {
+		super(kind, data);
+		this.groupName = groupName;
+		this.type = type;
+		this.seqVector = null;
 	}
 
 	public MulticastMessage(MulticastMessage message) {
 		super(message.getDest(), message.getKind(), message.getData());
-		this.groupId = message.getGroupId();
+		this.groupName = message.getGroupName();
 		this.seqVector = message.getSeqVector();
 	}
 
@@ -36,12 +48,20 @@ public class MulticastMessage extends TimeStampedMessage {
 				+ getData().toString();
 	}
 
-	public int getGroupId() {
-		return groupId;
+	public String getGroupName() {
+		return groupName;
 	}
 
-	public void setGroupId(int groupId) {
-		this.groupId = groupId;
+	public void setGroupName(String groupName) {
+		this.groupName = groupName;
+	}
+
+	public Type getType() {
+		return type;
+	}
+
+	public void setType(Type type) {
+		this.type = type;
 	}
 
 	public int[] getSeqVector() {
