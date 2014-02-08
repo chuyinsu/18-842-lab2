@@ -19,6 +19,7 @@ public class GroupManager {
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
 	private LinkedBlockingQueue<MulticastMessage> casualOrderingQueue;
 	private ArrayList<String> members;
+	private HashMap<String, Integer> memberNameToId;
 	private int[] seqVector;
 	private int[] recvVector;
 
@@ -26,7 +27,8 @@ public class GroupManager {
 	private final ReentrantLock lockForcCasualOrderingQueue = new ReentrantLock();
 
 	public GroupManager(String localName, String name, int id,
-			ArrayList<String> members, int[] seqVector) {
+			ArrayList<String> members, int[] seqVector,
+			HashMap<String, Integer> memeberNameToId) {
 		this.name = name;
 		this.localName = localName;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
@@ -35,6 +37,7 @@ public class GroupManager {
 		this.recvVector = Arrays.copyOf(seqVector, seqVector.length);
 		this.id = id;
 		this.members = members;
+		this.memberNameToId = memberNameToId;
 	}
 
 	public String getName() {
@@ -65,7 +68,7 @@ public class GroupManager {
 
 	public void send(MulticastMessage message, MessagePasser mp) {
 		// increase seqVector
-		seqVector[id]++;
+		seqVector[memberNameToId.get(localName)]++;
 		message.setSeqVector(Arrays.copyOf(seqVector, seqVector.length));
 
 		MulticastMessage originalMessage = new MulticastMessage(message);
@@ -199,7 +202,7 @@ public class GroupManager {
 		return seqVector;
 	}
 
-	public void checkReceivedMessage(HashMap<String, Integer> groupNameToId,
+	public void checkReceivedMessage(
 			LinkedBlockingQueue<MulticastMessage> deliverQueue) {
 		lockForReliabilityQueue.lock();
 		Iterator<RQueueElement> itrRQElem = reliabilityQueue.iterator();
@@ -221,9 +224,9 @@ public class GroupManager {
 		Iterator<MulticastMessage> itrMessage = casualOrderingQueue.iterator();
 		while (itrMessage.hasNext()) {
 			MulticastMessage message = itrMessage.next();
-			int sourceGroupId = groupNameToId.get(message.getSource());
-			if (message.getSeqVector()[sourceGroupId] == recvVector[sourceGroupId] + 1) {
-				recvVector[sourceGroupId]++;
+			int sourceMemberId = memberNameToId.get(message.getSource());
+			if (message.getSeqVector()[sourceMemberId] == recvVector[sourceMemberId] + 1) {
+				recvVector[sourceMemberId]++;
 				try {
 					deliverQueue.put(message);
 					itrMessage.remove();
