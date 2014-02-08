@@ -33,6 +33,7 @@ public class GroupManager {
 		this.seqVector = seqVector;
 		this.recvVector = Arrays.copyOf(seqVector, seqVector.length);
 		this.id = id;
+		this.members = members;
 	}
 
 	public String getName() {
