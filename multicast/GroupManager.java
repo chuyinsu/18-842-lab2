@@ -6,28 +6,21 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import multicast.MulticastMessage.Type;
+
 public class GroupManager {
-	private int id;
 	private String name; // groupName
 	private String localName; // node name
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
 	private LinkedBlockingQueue<MulticastMessage> casualOrderingQueue;
 	private ArrayList<String> members;
-
-	public GroupManager(String localName, int id, String name, ArrayList<String> members) {
-		this.id = id;
+	private int[] seqVector;
+	
+	public GroupManager(String localName, String name, ArrayList<String> members) {
 		this.name = name;
 		this.localName = localName;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public void setId(int id) {
-		this.id = id;
 	}
 
 	public String getName() {
@@ -88,7 +81,13 @@ public class GroupManager {
 
 	public void checkReliabilityQueue(MulticastMessage message) {
 		// acquire a lock here!
-		
+		if (message.getType() == Type.DATA) {
+			
+		} else if (message.getType() == Type.ACK) {
+			
+		} else {
+			// invalid message 
+		}
 	}
 
 	public void checkTimeOut(long timeout, MessagePasser mp) {
@@ -102,8 +101,8 @@ public class GroupManager {
 				if (localName.equals(originalMessage.getSource())) {
 					message = new MulticastMessage(rqElem.getMessage());
 				} else {
-					message = new MulticastMessage(localName, originalMessage.getKind(), 
-							new MulticastMessage(originalMessage), id, null);
+					message = new MulticastMessage(originalMessage.getGroupName(), originalMessage.getSource(), originalMessage.getDest(), 
+							originalMessage.getKind(), new MulticastMessage(originalMessage), Type.ACK, null);
 				}
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);

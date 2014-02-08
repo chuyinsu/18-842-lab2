@@ -16,7 +16,7 @@ public class Message implements Serializable {
 	private String dest;
 	private String kind;
 	private Object data;
-	private String source;
+	private String src;
 	private int sequenceNumber;
 	private boolean dupe;
 
@@ -31,9 +31,16 @@ public class Message implements Serializable {
 		this.data = data;
 	}
 
+	public Message(String src, String dest, String kind, Object data) {
+		this.src = src;
+		this.dest = dest;
+		this.kind = kind;
+		this.data = data;
+	}
+
 	@Override
 	public String toString() {
-		return "[src] " + source + " [dst] " + dest + " [kind] " + kind
+		return "[src] " + src + " [dst] " + dest + " [kind] " + kind
 				+ " [seq] " + sequenceNumber + " [dup] "
 				+ (dupe ? "true" : "false") + " [data] " + data.toString();
 	}
@@ -63,11 +70,11 @@ public class Message implements Serializable {
 	}
 
 	public String getSource() {
-		return source;
+		return src;
 	}
 
 	public void setSource(String source) {
-		this.source = source;
+		this.src = source;
 	}
 
 	public int getSequenceNumber() {

@@ -31,7 +31,7 @@ public class CORMulticast {
 	// the multicast infrastructure is built upon MessagePasser
 	private MessagePasser messagePasser;
 
-	private HashMap<Integer, GroupManager> idToManager;
+	private HashMap<String, GroupManager> nameToManager;
 	private ArrayList<GroupManager> groupManagers;
 
 	private String localName;
@@ -51,16 +51,14 @@ public class CORMulticast {
 
 	@SuppressWarnings("unchecked")
 	private void initializeGroups() {
-		int groupId = 0;
 		for (HashMap<String, Object> g : groupData) {
 			String groupName = (String) g.get(GROUP_NAME);
 			ArrayList<String> groupMembers = (ArrayList<String>) (g
 					.get(GROUP_MEMBER));
-			GroupManager groupManager = new GroupManager(localName, groupId, groupName,
+			GroupManager groupManager = new GroupManager(localName, groupName,
 					groupMembers);
 			groupManagers.add(groupManager);
-			idToManager.put(groupId, groupManager);
-			groupId++;
+			nameToManager.put(groupName, groupManager);
 		}
 	}
 
@@ -68,6 +66,15 @@ public class CORMulticast {
 		// send a message to a group
 		for (GroupManager g : groupManagers) {
 			g.send(message, this.messagePasser);
+		}
+	}
+	
+	public void send(MulticastMessage message, String groupName) {
+		// send a message to a group
+		if (nameToManager.containsKey(groupName)) {
+			nameToManager.get(groupName).send(message, this.messagePasser);
+		} else {
+			System.out.println("Group Name:" + groupName + " does not exist!");
 		}
 	}
 
@@ -89,8 +96,8 @@ public class CORMulticast {
 			while (true) {
 				// need acquire a lock for mp?
 				MulticastMessage message = (MulticastMessage)messagePasser.receive();
-				int groupId = message.getGroupId();
-				GroupManager gm = idToManager.containsKey(groupId) ? idToManager.get(groupId) : null;
+				String groupName = message.getGroupName();
+				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager.get(groupName) : null;
 				if (gm != null) {
 					gm.checkReliabilityQueue(message);
 				}
