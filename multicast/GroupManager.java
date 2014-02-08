@@ -4,6 +4,7 @@ import ipc.Contact;
 import ipc.MessagePasser;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class GroupManager {
@@ -67,6 +68,10 @@ public class GroupManager {
 	}
 
 	public void send(MulticastMessage message, MessagePasser mp) {
+		String localName = message.getSource();
+		HashSet<String> remainingNodes = new HashSet<String>();
+		RQueueElement rqElem = new RQueueElement(, System.currentTimeMillis(), 
+				new MulticastMessage(message));
 		for (String m : members) {
 			message.setSource(m);
 			mp.send(new MulticastMessage(message));
