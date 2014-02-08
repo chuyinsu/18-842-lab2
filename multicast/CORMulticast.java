@@ -1,7 +1,12 @@
 package multicast;
 
+import ipc.MessagePasser;
+
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import utils.ConfigurationParser;
+import utils.ConfigurationParser.ConfigInfo;
 
 /**
  * Casual-Ordering Reliable Multicast (CORMulticast). Implementation details:
@@ -20,5 +25,35 @@ public class CORMulticast {
 	// each group is represented as a HashMap, inside which key GROUP_NAME has
 	// the group's name as a String value, key GROUP_MEMBER has the group's
 	// members as an ArrayList<String> value
-	private ArrayList<HashMap<String, Object>> groups;
+	private ArrayList<HashMap<String, Object>> groupData;
+
+	// the multicast infrastructure is built upon MessagePasser
+	private MessagePasser messagePasser;
+
+	private ArrayList<Group> groups;
+	private ArrayList<Thread> groupThreads;
+
+	public CORMulticast(String configurationFileName, String localName,
+			ConfigInfo ci, ConfigurationParser cp) {
+		this.groupData = ci.getGroups();
+		this.messagePasser = new MessagePasser(configurationFileName,
+				localName, ci, cp);
+		this.groups = new ArrayList<Group>();
+		this.groupThreads = new ArrayList<Thread>();
+		initializeGroups();
+	}
+
+	private void initializeGroups() {
+		// parse Group instances from groupData
+		// start group threads
+	}
+
+	public void send(MulticastMessage message) {
+		// send a message to a group
+	}
+
+	public MulticastMessage receive() {
+		// receive a message from deliverQueue
+		return null;
+	}
 }
