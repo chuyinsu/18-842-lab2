@@ -88,7 +88,7 @@ public class MulticastControlPanel {
 
 		Scanner scanner = new Scanner(System.in);
 		while (true) {
-			System.out.print("DS_Lab2>> ");
+			System.out.print("DS_Lab2(" + localName + ")>> ");
 			String cmd = scanner.nextLine();
 			if (cmd.equals(HELP_CMD)) {
 				System.out.println(HELP_CONTENT);
