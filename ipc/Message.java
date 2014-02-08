@@ -38,6 +38,15 @@ public class Message implements Serializable {
 		this.data = data;
 	}
 
+	public Message(Message message) {
+		this.dest = message.dest;
+		this.kind = message.kind;
+		this.data = message.data;
+		this.src = message.src;
+		this.sequenceNumber = message.sequenceNumber;
+		this.dupe = message.dupe;
+	}
+
 	@Override
 	public String toString() {
 		return "[src] " + src + " [dst] " + dest + " [kind] " + kind

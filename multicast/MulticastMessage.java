@@ -43,9 +43,9 @@ public class MulticastMessage extends TimeStampedMessage {
 
 	public MulticastMessage(MulticastMessage message) {
 		super(message);
-		this.type = message.getType();
-		this.groupName = message.getGroupName();
-		this.seqVector = message.getSeqVector();
+		this.groupName = message.groupName;
+		this.seqVector = message.seqVector.clone();
+		this.type = message.type;
 	}
 
 	@Override
