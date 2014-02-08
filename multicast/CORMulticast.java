@@ -40,23 +40,23 @@ public class CORMulticast {
 	// deliverQueue is shared among all groups
 	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
 
-	private final ReentrantLock lock =  new ReentrantLock(); 
-	
+	private final ReentrantLock lock = new ReentrantLock();
+
 	public CORMulticast(String configurationFileName, String localName,
 			ConfigInfo ci, ConfigurationParser cp) {
 		this.groupData = ci.getGroups();
 		this.messagePasser = new MessagePasser(configurationFileName,
 				localName, ci, cp);
 		this.nameToManager = new HashMap<String, GroupManager>();
-		this.groupNameToId = new  HashMap<String, Integer>();
+		this.groupNameToId = new HashMap<String, Integer>();
 		this.groupManagers = new ArrayList<GroupManager>();
 		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.localName = localName;
 		initializeGroups();
-		
+
 		Thread receiverThread = new Thread(new Receiver());
 		receiverThread.start();
-		
+
 		Thread statusCheckerThread = new Thread(new StatusChecker());
 		statusCheckerThread.start();
 	}
@@ -65,18 +65,23 @@ public class CORMulticast {
 	private void initializeGroups() {
 		int groupId = 0;
 		for (HashMap<String, Object> g : groupData) {
+			HashMap<String, Integer> memberNameToId = new HashMap<String, Integer>();
 			String groupName = (String) g.get(GROUP_NAME);
 			ArrayList<String> groupMembers = (ArrayList<String>) (g
 					.get(GROUP_MEMBER));
-			GroupManager groupManager = new GroupManager(localName, groupName, groupId,
-					groupMembers, new int[groupData.size()]);
+			for (int i = 0; i < groupMembers.size(); i++) {
+				memberNameToId.put(groupMembers.get(i), i);
+			}
+			GroupManager groupManager = new GroupManager(localName, groupName,
+					groupId, groupMembers, new int[groupMembers.size()],
+					memberNameToId);
 			groupManagers.add(groupManager);
 			nameToManager.put(groupName, groupManager);
 			groupNameToId.put(groupName, groupId);
 			groupId++;
 		}
 	}
-	
+
 	public void send(MulticastMessage message) {
 		// send a message to a group
 		String groupName = message.getGroupName();
@@ -90,7 +95,8 @@ public class CORMulticast {
 			if (isValidMember) {
 				nameToManager.get(groupName).send(message, this.messagePasser);
 			} else {
-				System.out.println("User:" + message.getSource() + " does not belong to this group!");
+				System.out.println("User:" + message.getSource()
+						+ " does not belong to this group!");
 			}
 		} else {
 			System.out.println("Group Name:" + groupName + " does not exist!");
@@ -107,26 +113,28 @@ public class CORMulticast {
 			return null;
 		}
 	}
-	
+
 	class Receiver implements Runnable {
-		
+
 		@Override
 		public void run() {
 			while (true) {
 				// need acquire a lock for mp?
-				MulticastMessage message = (MulticastMessage)messagePasser.receive();
+				MulticastMessage message = (MulticastMessage) messagePasser
+						.receive();
 				String groupName = message.getGroupName();
-				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager.get(groupName) : null;
+				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager
+						.get(groupName) : null;
 				if (gm != null) {
 					gm.checkReliabilityQueue(message, messagePasser);
 				}
 			}
 		}
-		
+
 	}
-	
+
 	class StatusChecker implements Runnable {
-		
+
 		@Override
 		public void run() {
 			while (true) {
@@ -137,6 +145,6 @@ public class CORMulticast {
 				}
 			}
 		}
-		
+
 	}
 }
