@@ -8,19 +8,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class GroupManager {
 	private int id;
-	private String name;
+	private String name; // groupName
+	private String localName; // node name
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
 	private LinkedBlockingQueue<MulticastMessage> casualOrderingQueue;
-	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
 	private ArrayList<String> members;
 
-	public GroupManager(int id, String name, ArrayList<String> members) {
+	public GroupManager(String localName, int id, String name, ArrayList<String> members) {
 		this.id = id;
 		this.name = name;
+		this.localName = localName;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
-		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
-
 	}
 
 	public int getId() {
@@ -57,23 +56,25 @@ public class GroupManager {
 		this.casualOrderingQueue = casualOrderingQueue;
 	}
 
-	public LinkedBlockingQueue<MulticastMessage> getDeliverQueue() {
-		return deliverQueue;
-	}
-
-	public void setDeliverQueue(
-			LinkedBlockingQueue<MulticastMessage> deliverQueue) {
-		this.deliverQueue = deliverQueue;
-	}
-
 	public void send(MulticastMessage message, MessagePasser mp) {
-		String localName = message.getSource();
+		MulticastMessage originalMessage = new MulticastMessage(message);
 		HashSet<String> remainingNodes = new HashSet<String>();
-		RQueueElement rqElem = new RQueueElement(, System.currentTimeMillis(), 
-				new MulticastMessage(message));
+		
 		for (String m : members) {
-			message.setSource(m);
-			mp.send(new MulticastMessage(message));
+			if (!m.equals(localName)) {
+				remainingNodes.add(m);
+				message.setDest(m);
+				mp.send(new MulticastMessage(message));
+			} 
+		}
+		
+		RQueueElement rqElem = new RQueueElement(remainingNodes, System.currentTimeMillis(), 
+				originalMessage);
+		// acquire a lock here!
+		try {
+			reliabilityQueue.put(rqElem);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -83,5 +84,32 @@ public class GroupManager {
 
 	public void setMembers(ArrayList<String> members) {
 		this.members = members;
+	}
+
+	public void checkReliabilityQueue(MulticastMessage message) {
+		// acquire a lock here!
+		
+	}
+
+	public void checkTimeOut(long timeout, MessagePasser mp) {
+		long curTime = System.currentTimeMillis();
+		for (RQueueElement rqElem : reliabilityQueue) {
+			// resend
+			if (curTime - rqElem.getReceivedTime() >= 0) {
+				// message is organic from this node
+				MulticastMessage message;
+				MulticastMessage originalMessage = rqElem.getMessage();
+				if (localName.equals(originalMessage.getSource())) {
+					message = new MulticastMessage(rqElem.getMessage());
+				} else {
+					message = new MulticastMessage(localName, originalMessage.getKind(), 
+							new MulticastMessage(originalMessage), id, null);
+				}
+				for (String name : rqElem.getRemainingNodes()) {
+					message.setDest(name);
+					mp.send(new MulticastMessage(message));
+				}
+			}
+		}
 	}
 }
