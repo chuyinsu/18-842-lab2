@@ -4,6 +4,7 @@ import ipc.MessagePasser;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import utils.ConfigurationParser;
 import utils.ConfigurationParser.ConfigInfo;
@@ -30,22 +31,32 @@ public class CORMulticast {
 	// the multicast infrastructure is built upon MessagePasser
 	private MessagePasser messagePasser;
 
-	private ArrayList<Group> groups;
-	private ArrayList<Thread> groupThreads;
+	private ArrayList<GroupManager> groups;
+
+	// deliverQueue is shared among all groups
+	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
 
 	public CORMulticast(String configurationFileName, String localName,
 			ConfigInfo ci, ConfigurationParser cp) {
 		this.groupData = ci.getGroups();
 		this.messagePasser = new MessagePasser(configurationFileName,
 				localName, ci, cp);
-		this.groups = new ArrayList<Group>();
-		this.groupThreads = new ArrayList<Thread>();
+		this.groups = new ArrayList<GroupManager>();
+		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
 		initializeGroups();
 	}
 
+	@SuppressWarnings("unchecked")
 	private void initializeGroups() {
-		// parse Group instances from groupData
-		// start group threads
+		int groupId = 0;
+		for (HashMap<String, Object> g : groupData) {
+			String groupName = (String) g.get(GROUP_NAME);
+			ArrayList<String> groupMembers = (ArrayList<String>) (g
+					.get(GROUP_MEMBER));
+			GroupManager group = new GroupManager(groupId++, groupName,
+					groupMembers);
+			groups.add(group);
+		}
 	}
 
 	public void send(MulticastMessage message) {
