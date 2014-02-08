@@ -26,7 +26,8 @@ public class MulticastMessage extends TimeStampedMessage {
 
 	public MulticastMessage(String source, String groupName, String kind,
 			Object data, Type type) {
-		super(source, kind, data);
+		super(kind, data);
+		setSource(source);
 		this.groupName = groupName;
 		this.type = type;
 		this.seqVector = null;
