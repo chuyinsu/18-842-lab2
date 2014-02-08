@@ -47,13 +47,18 @@ public class CORMulticast {
 		this.groupData = ci.getGroups();
 		this.messagePasser = new MessagePasser(configurationFileName,
 				localName, ci, cp);
+		this.nameToManager = new HashMap<String, GroupManager>();
+		this.groupNameToId = new  HashMap<String, Integer>();
 		this.groupManagers = new ArrayList<GroupManager>();
 		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.localName = localName;
 		initializeGroups();
 		
-		(new Receiver()).run();
-		(new StatusChecker()).run();
+		Thread receiverThread = new Thread(new Receiver());
+		receiverThread.start();
+		
+		Thread statusCheckerThread = new Thread(new StatusChecker());
+		statusCheckerThread.start();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -76,7 +81,17 @@ public class CORMulticast {
 		// send a message to a group
 		String groupName = message.getGroupName();
 		if (nameToManager.containsKey(groupName)) {
-			nameToManager.get(groupName).send(message, this.messagePasser);
+			boolean isValidMember = false;
+			for (String member : nameToManager.get(groupName).getMembers()) {
+				if (member.equals(message.getSource())) {
+					isValidMember = true;
+				}
+			}
+			if (isValidMember) {
+				nameToManager.get(groupName).send(message, this.messagePasser);
+			} else {
+				System.out.println("User:" + message.getSource() + " does not belong to this group!");
+			}
 		} else {
 			System.out.println("Group Name:" + groupName + " does not exist!");
 		}
