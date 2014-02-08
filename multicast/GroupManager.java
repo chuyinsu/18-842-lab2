@@ -21,11 +21,12 @@ public class GroupManager {
 	private ArrayList<String> members;
 	private int[] seqVector;
 	private int[] recvVector;
-	
-	private final ReentrantLock lockForReliabilityQueue =  new ReentrantLock();
-	private final ReentrantLock lockForcCasualOrderingQueue =  new ReentrantLock();
-	
-	public GroupManager(String localName, String name, int id, ArrayList<String> members, int[] seqVector) {
+
+	private final ReentrantLock lockForReliabilityQueue = new ReentrantLock();
+	private final ReentrantLock lockForcCasualOrderingQueue = new ReentrantLock();
+
+	public GroupManager(String localName, String name, int id,
+			ArrayList<String> members, int[] seqVector) {
 		this.name = name;
 		this.localName = localName;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
@@ -33,6 +34,7 @@ public class GroupManager {
 		this.seqVector = seqVector;
 		this.recvVector = Arrays.copyOf(seqVector, seqVector.length);
 		this.id = id;
+		this.members = members;
 	}
 
 	public String getName() {
@@ -65,20 +67,20 @@ public class GroupManager {
 		// increase seqVector
 		seqVector[id]++;
 		message.setSeqVector(Arrays.copyOf(seqVector, seqVector.length));
-		
+
 		MulticastMessage originalMessage = new MulticastMessage(message);
 		HashSet<String> remainingNodes = new HashSet<String>();
-		
+
 		for (String m : members) {
 			if (!m.equals(localName)) {
 				remainingNodes.add(m);
 				message.setDest(m);
 				mp.send(new MulticastMessage(message));
-			} 
+			}
 		}
-		
-		RQueueElement rqElem = new RQueueElement(remainingNodes, System.currentTimeMillis(), 
-				originalMessage);
+
+		RQueueElement rqElem = new RQueueElement(remainingNodes,
+				System.currentTimeMillis(), originalMessage);
 		// acquire a lock here!
 		try {
 			lockForReliabilityQueue.lock();
@@ -103,42 +105,45 @@ public class GroupManager {
 		if (message.getType() == Type.DATA) {
 			originalMessage = message;
 		} else if (message.getType() == Type.ACK) {
-			originalMessage = (MulticastMessage)message.getData();
+			originalMessage = (MulticastMessage) message.getData();
 		} else {
-			// invalid message 
+			// invalid message
 			return;
 		}
-		
+
 		lockForReliabilityQueue.lock();
-		// check reliability queue 
+		// check reliability queue
 		RQueueElement validRQElem = null;
 		for (RQueueElement rqElem : reliabilityQueue) {
 			String src = rqElem.getMessage().getSource();
 			int[] vector = rqElem.getMessage().getSeqVector();
-			if (src.equals(originalMessage.getSource()) && vector.equals(originalMessage.getSeqVector())) {
+			if (src.equals(originalMessage.getSource())
+					&& vector.equals(originalMessage.getSeqVector())) {
 				// already receive the message from other node
 				validRQElem = rqElem;
 				break;
-			} 
+			}
 		}
 		lockForReliabilityQueue.unlock();
 		if (validRQElem == null) {
-			
+
 			HashSet<String> remainingNodes = new HashSet<String>();
-			
+
 			for (String m : members) {
 				if (!m.equals(localName)) {
 					if (!m.equals(from)) {
 						remainingNodes.add(m);
 					}
-					message = new MulticastMessage(originalMessage.getGroupName(), localName, m, 
-							originalMessage.getKind(), new MulticastMessage(originalMessage), Type.ACK, null);
+					message = new MulticastMessage(
+							originalMessage.getGroupName(), localName, m,
+							originalMessage.getKind(), new MulticastMessage(
+									originalMessage), Type.ACK, null);
 					mp.send(message);
-				} 
+				}
 			}
-			
-			RQueueElement rqElem = new RQueueElement(remainingNodes, System.currentTimeMillis(), 
-					originalMessage);
+
+			RQueueElement rqElem = new RQueueElement(remainingNodes,
+					System.currentTimeMillis(), originalMessage);
 			// acquire a lock here!
 			try {
 				reliabilityQueue.put(rqElem);
@@ -150,13 +155,16 @@ public class GroupManager {
 			if (remainingNode.contains(from)) {
 				remainingNode.remove(from);
 			} else {
-				// receive a resending message from source, this means source did not receive the ACK
-				message = new MulticastMessage(originalMessage.getGroupName(), localName, originalMessage.getSource(), 
-						originalMessage.getKind(), new MulticastMessage(originalMessage), Type.ACK, null);
+				// receive a resending message from source, this means source
+				// did not receive the ACK
+				message = new MulticastMessage(originalMessage.getGroupName(),
+						localName, originalMessage.getSource(),
+						originalMessage.getKind(), new MulticastMessage(
+								originalMessage), Type.ACK, null);
 				mp.send(message);
 			}
 		}
-		
+
 	}
 
 	public void checkTimeOut(long timeout, MessagePasser mp) {
@@ -171,8 +179,12 @@ public class GroupManager {
 				if (localName.equals(originalMessage.getSource())) {
 					message = new MulticastMessage(rqElem.getMessage());
 				} else {
-					message = new MulticastMessage(originalMessage.getGroupName(), originalMessage.getSource(), originalMessage.getDest(), 
-							originalMessage.getKind(), new MulticastMessage(originalMessage), Type.ACK, null);
+					message = new MulticastMessage(
+							originalMessage.getGroupName(),
+							originalMessage.getSource(),
+							originalMessage.getDest(),
+							originalMessage.getKind(), new MulticastMessage(
+									originalMessage), Type.ACK, null);
 				}
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
@@ -187,12 +199,13 @@ public class GroupManager {
 		return seqVector;
 	}
 
-	public void checkReceivedMessage(HashMap<String, Integer> groupNameToId, LinkedBlockingQueue<MulticastMessage> deliverQueue) {
-	 	lockForReliabilityQueue.lock();
+	public void checkReceivedMessage(HashMap<String, Integer> groupNameToId,
+			LinkedBlockingQueue<MulticastMessage> deliverQueue) {
+		lockForReliabilityQueue.lock();
 		Iterator<RQueueElement> itrRQElem = reliabilityQueue.iterator();
-	 	while (itrRQElem.hasNext()) {
-	 		RQueueElement rqElem = itrRQElem.next();
-	 		if (rqElem.getRemainingNodes().isEmpty()) {
+		while (itrRQElem.hasNext()) {
+			RQueueElement rqElem = itrRQElem.next();
+			if (rqElem.getRemainingNodes().isEmpty()) {
 				try {
 					casualOrderingQueue.put(rqElem.getMessage());
 					itrRQElem.remove();
@@ -201,11 +214,11 @@ public class GroupManager {
 					e.printStackTrace();
 				}
 			}
-	 	}
-	 	lockForReliabilityQueue.unlock();
-	 	lockForcCasualOrderingQueue.lock();
-	 	// check casual order
-	 	Iterator<MulticastMessage> itrMessage = casualOrderingQueue.iterator();
+		}
+		lockForReliabilityQueue.unlock();
+		lockForcCasualOrderingQueue.lock();
+		// check casual order
+		Iterator<MulticastMessage> itrMessage = casualOrderingQueue.iterator();
 		while (itrMessage.hasNext()) {
 			MulticastMessage message = itrMessage.next();
 			int sourceGroupId = groupNameToId.get(message.getSource());
