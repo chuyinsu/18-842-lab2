@@ -28,7 +28,7 @@ public class GroupManager {
 
 	public GroupManager(String localName, String name, int id,
 			ArrayList<String> members, int[] seqVector,
-			HashMap<String, Integer> memeberNameToId) {
+			HashMap<String, Integer> memberNameToId) {
 		this.name = name;
 		this.localName = localName;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
