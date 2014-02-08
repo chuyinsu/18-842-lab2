@@ -61,6 +61,9 @@ public class CORMulticast {
 
 	public void send(MulticastMessage message) {
 		// send a message to a group
+		for (GroupManager g : groups) {
+			g.send(message, this.messagePasser);
+		}
 	}
 
 	public MulticastMessage receive() {
