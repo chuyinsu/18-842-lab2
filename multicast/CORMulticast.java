@@ -51,26 +51,21 @@ public class CORMulticast {
 
 	@SuppressWarnings("unchecked")
 	private void initializeGroups() {
+		int groupId = 0;
 		for (HashMap<String, Object> g : groupData) {
 			String groupName = (String) g.get(GROUP_NAME);
 			ArrayList<String> groupMembers = (ArrayList<String>) (g
 					.get(GROUP_MEMBER));
-			GroupManager groupManager = new GroupManager(localName, groupName,
-					groupMembers);
+			GroupManager groupManager = new GroupManager(localName, groupName, groupId++,
+					groupMembers, new int[groupData.size()]);
 			groupManagers.add(groupManager);
 			nameToManager.put(groupName, groupManager);
 		}
 	}
-
+	
 	public void send(MulticastMessage message) {
 		// send a message to a group
-		for (GroupManager g : groupManagers) {
-			g.send(message, this.messagePasser);
-		}
-	}
-	
-	public void send(MulticastMessage message, String groupName) {
-		// send a message to a group
+		String groupName = message.getGroupName();
 		if (nameToManager.containsKey(groupName)) {
 			nameToManager.get(groupName).send(message, this.messagePasser);
 		} else {
@@ -99,7 +94,7 @@ public class CORMulticast {
 				String groupName = message.getGroupName();
 				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager.get(groupName) : null;
 				if (gm != null) {
-					gm.checkReliabilityQueue(message);
+					gm.checkReliabilityQueue(message, messagePasser);
 				}
 			}
 		}
@@ -113,6 +108,7 @@ public class CORMulticast {
 			while (true) {
 				// need acquire a lock for gms?
 				for (GroupManager gm : groupManagers) {
+					gm.checkReceivedMessage();
 					gm.checkTimeOut(timeout, messagePasser);
 				}
 			}

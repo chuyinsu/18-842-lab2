@@ -3,12 +3,14 @@ package multicast;
 import ipc.MessagePasser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import multicast.MulticastMessage.Type;
 
 public class GroupManager {
+	private int id;
 	private String name; // groupName
 	private String localName; // node name
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
@@ -16,11 +18,13 @@ public class GroupManager {
 	private ArrayList<String> members;
 	private int[] seqVector;
 	
-	public GroupManager(String localName, String name, ArrayList<String> members) {
+	public GroupManager(String localName, String name, int id, ArrayList<String> members, int[] seqVector) {
 		this.name = name;
 		this.localName = localName;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
+		this.seqVector = seqVector;
+		this.id = id;
 	}
 
 	public String getName() {
@@ -50,6 +54,10 @@ public class GroupManager {
 	}
 
 	public void send(MulticastMessage message, MessagePasser mp) {
+		// increase seqVector
+		seqVector[id]++;
+		message.setSeqVector(Arrays.copyOf(seqVector, seqVector.length));
+		
 		MulticastMessage originalMessage = new MulticastMessage(message);
 		HashSet<String> remainingNodes = new HashSet<String>();
 		
@@ -79,15 +87,64 @@ public class GroupManager {
 		this.members = members;
 	}
 
-	public void checkReliabilityQueue(MulticastMessage message) {
-		// acquire a lock here!
+	public void checkReliabilityQueue(MulticastMessage message, MessagePasser mp) {
+		MulticastMessage originalMessage;
+		String from = message.getSource();
 		if (message.getType() == Type.DATA) {
-			
+			originalMessage = message;
 		} else if (message.getType() == Type.ACK) {
-			
+			originalMessage = (MulticastMessage)message.getData();
 		} else {
 			// invalid message 
+			return;
 		}
+		
+		// check reliability queue 
+		RQueueElement validRQElem = null;
+		for (RQueueElement rqElem : reliabilityQueue) {
+			String src = rqElem.getMessage().getSource();
+			int[] vector = rqElem.getMessage().getSeqVector();
+			if (src.equals(originalMessage.getSource()) && vector.equals(originalMessage.getSeqVector())) {
+				// already receive the message from other node
+				validRQElem = rqElem;
+				break;
+			} 
+		}
+		if (validRQElem == null) {
+			
+			HashSet<String> remainingNodes = new HashSet<String>();
+			
+			for (String m : members) {
+				if (!m.equals(localName)) {
+					if (!m.equals(from)) {
+						remainingNodes.add(m);
+					}
+					message = new MulticastMessage(originalMessage.getGroupName(), localName, m, 
+							originalMessage.getKind(), new MulticastMessage(originalMessage), Type.ACK, null);
+					mp.send(message);
+				} 
+			}
+			
+			RQueueElement rqElem = new RQueueElement(remainingNodes, System.currentTimeMillis(), 
+					originalMessage);
+			// acquire a lock here!
+			try {
+				reliabilityQueue.put(rqElem);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		} else {
+			HashSet<String> remainingNode = validRQElem.getRemainingNodes();
+			if (remainingNode.contains(from)) {
+				remainingNode.remove(from);
+			} else {
+				// receive a resending message from source, this means source did not receive the ACK
+				message = new MulticastMessage(originalMessage.getGroupName(), localName, originalMessage.getSource(), 
+						originalMessage.getKind(), new MulticastMessage(originalMessage), Type.ACK, null);
+				mp.send(message);
+			}
+		}
+	
 	}
 
 	public void checkTimeOut(long timeout, MessagePasser mp) {
@@ -106,9 +163,27 @@ public class GroupManager {
 				}
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
-					mp.send(new MulticastMessage(message));
+					mp.send(message);
 				}
 			}
 		}
+	}
+
+	public int[] getSeqVector() {
+		return seqVector;
+	}
+
+	public void checkReceivedMessage() {
+		for (RQueueElement rqElem : reliabilityQueue) {
+			if (rqElem.getRemainingNodes().isEmpty()) {
+				try {
+					casualOrderingQueue.put(rqElem.getMessage());
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
+		// check casual order
 	}
 }
