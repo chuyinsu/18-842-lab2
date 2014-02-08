@@ -21,6 +21,11 @@ public class TimeStampedMessage extends Message implements
 		this.timeStamp = null;
 	}
 
+	public TimeStampedMessage(TimeStampedMessage message) {
+		super(message);
+		this.timeStamp = new TimeStamp(message.timeStamp);
+	}
+
 	public TimeStamp getTimeStamp() {
 		return timeStamp;
 	}
