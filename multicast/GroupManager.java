@@ -1,24 +1,26 @@
 package multicast;
 
+import ipc.Contact;
+import ipc.MessagePasser;
+
+import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class Group implements Runnable {
+public class GroupManager {
 	private int id;
 	private String name;
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
 	private LinkedBlockingQueue<MulticastMessage> casualOrderingQueue;
 	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
+	private ArrayList<String> members;
 
-	public Group(int id, String name) {
+	public GroupManager(int id, String name, ArrayList<String> members) {
 		this.id = id;
 		this.name = name;
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.deliverQueue = new LinkedBlockingQueue<MulticastMessage>();
-	}
 
-	public void run() {
-		// loops on reliabilityQueue to check timeout messages
 	}
 
 	public int getId() {
@@ -62,5 +64,20 @@ public class Group implements Runnable {
 	public void setDeliverQueue(
 			LinkedBlockingQueue<MulticastMessage> deliverQueue) {
 		this.deliverQueue = deliverQueue;
+	}
+
+	public void send(MulticastMessage message, MessagePasser mp) {
+		for (String m : members) {
+			message.setSource(m);
+			mp.send(new MulticastMessage(message));
+		}
+	}
+
+	public ArrayList<String> getMembers() {
+		return members;
+	}
+
+	public void setMembers(ArrayList<String> members) {
+		this.members = members;
 	}
 }

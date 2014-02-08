@@ -1,5 +1,6 @@
 package multicast;
 
+import ipc.Contact;
 import ipc.MessagePasser;
 
 import java.util.ArrayList;
@@ -30,7 +31,7 @@ public class CORMulticast {
 	// the multicast infrastructure is built upon MessagePasser
 	private MessagePasser messagePasser;
 
-	private ArrayList<Group> groups;
+	private ArrayList<GroupManager> groups;
 	private ArrayList<Thread> groupThreads;
 
 	public CORMulticast(String configurationFileName, String localName,
@@ -38,7 +39,7 @@ public class CORMulticast {
 		this.groupData = ci.getGroups();
 		this.messagePasser = new MessagePasser(configurationFileName,
 				localName, ci, cp);
-		this.groups = new ArrayList<Group>();
+		this.groups = new ArrayList<GroupManager>();
 		this.groupThreads = new ArrayList<Thread>();
 		initializeGroups();
 	}
@@ -50,6 +51,9 @@ public class CORMulticast {
 
 	public void send(MulticastMessage message) {
 		// send a message to a group
+		for (GroupManager g : groups) {
+			g.send(message, this.messagePasser);
+		}
 	}
 
 	public MulticastMessage receive() {

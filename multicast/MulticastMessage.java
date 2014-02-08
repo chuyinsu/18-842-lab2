@@ -20,6 +20,12 @@ public class MulticastMessage extends TimeStampedMessage {
 		this.seqVector = seqVector;
 	}
 
+	public MulticastMessage(MulticastMessage message) {
+		super(message.getDest(), message.getKind(), message.getData());
+		this.groupId = message.getGroupId();
+		this.seqVector = message.getSeqVector();
+	}
+
 	@Override
 	public String toString() {
 		return "[src] " + getSource() + " [dst] " + getDest() + " [kind] "
