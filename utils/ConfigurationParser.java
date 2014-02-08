@@ -114,7 +114,7 @@ public class ConfigurationParser {
 	public boolean downloadConfigurationFile(
 			String serverConfigurationFileName,
 			String localConfigurationFileName) {
-		String configurationFileURL = "https://dl.dropboxusercontent.com/s/h2z8zxpwshwotks/"
+		String configurationFileURL = "https://dl.dropboxusercontent.com/s/x5okbj3cwyj3t1c/"
 				+ serverConfigurationFileName + "?dl=1";
 		BufferedInputStream bis = null;
 		BufferedOutputStream bos = null;
