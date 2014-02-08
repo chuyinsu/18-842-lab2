@@ -135,7 +135,7 @@ public class MulticastControlPanel {
 			System.out.println(USAGE);
 			System.exit(-1);
 		}
-		ControlPanel cp = new ControlPanel();
-		cp.startUserInterface(args[0], args[1]);
+		MulticastControlPanel mcp = new MulticastControlPanel();
+		mcp.startUserInterface(args[0], args[1]);
 	}
 }
