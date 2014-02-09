@@ -139,7 +139,7 @@ public class GroupManager {
 		}
 
 		if (validRQElem == null) {
-			if (!IsAlreadyReceived(message)) {
+			if (!IsAlreadyReceived(originalMessage)) {
 				HashSet<String> remainingNodes = new HashSet<String>();
 				for (String m : members) {
 					if (!m.equals(localName)) {
