@@ -112,11 +112,11 @@ public class MessagePasser {
 					rulesLock.unlock();
 				}
 				if (!senderThread.isAlive()) {
-					System.err
+					System.out
 							.println("MessagePasser health check: sender thread died");
 				}
 				if (!receiverThread.isAlive()) {
-					System.err
+					System.out
 							.println("MessagePasser health check: receiver thread died");
 				}
 			}
@@ -149,7 +149,7 @@ public class MessagePasser {
 
 					// cannot send if receiver does not exist
 					if (!contactMap.containsKey(dest)) {
-						System.err.println("process with name " + dest
+						System.out.println("process with name " + dest
 								+ " dose not exist");
 						continue;
 					}
@@ -179,8 +179,6 @@ public class MessagePasser {
 					String action = checkRules(message, sendRules);
 					if (action == null) {
 						if (!sendMessage(clientSocket, message)) {
-							System.err.println("failed to send message - "
-									+ message.toString());
 							socketMap.remove(dest);
 						}
 						clearDelayBuffer(clientSocket);
@@ -247,22 +245,15 @@ public class MessagePasser {
 			try {
 				output = socket.getOutputStream();
 			} catch (Exception ex) {
-				System.err.println("failed to get output stream - "
-						+ ex.getMessage());
 				return false;
 			}
 			try {
 				objectOutput = new ObjectOutputStream(output);
 			} catch (Exception ex) {
-				System.err.println("failed to create object output stream - "
-						+ ex.getMessage());
 				if (objectOutput != null) {
 					try {
 						objectOutput.close();
 					} catch (Exception nestedEx) {
-						System.err
-								.println("failed to close object output stream - "
-										+ nestedEx);
 					}
 				}
 				return false;
@@ -270,15 +261,10 @@ public class MessagePasser {
 			try {
 				objectOutput.writeObject(message);
 			} catch (Exception ex) {
-				System.err.println("failed to send message - "
-						+ ex.getMessage());
 				if (objectOutput != null) {
 					try {
 						objectOutput.close();
 					} catch (Exception nestedEx) {
-						System.err
-								.println("failed to close object output stream - "
-										+ nestedEx);
 					}
 				}
 				return false;
@@ -329,8 +315,6 @@ public class MessagePasser {
 					 * probably the case the the socket has failed
 					 */
 					if (message == null) {
-						System.err
-								.println("failed to receive message from socket");
 						NetTool.destroySocket(clientSocket);
 						return;
 					}
@@ -389,22 +373,15 @@ public class MessagePasser {
 				try {
 					input = socket.getInputStream();
 				} catch (Exception ex) {
-					System.err.println("failed to get input stream - "
-							+ ex.getMessage());
 					return null;
 				}
 				try {
 					objectInput = new ObjectInputStream(input);
 				} catch (Exception ex) {
-					System.err.println("failed to get object input stream - "
-							+ ex.getMessage());
 					if (objectInput != null) {
 						try {
 							objectInput.close();
 						} catch (Exception nestedEx) {
-							System.err
-									.println("failed to close object input stream - "
-											+ nestedEx);
 						}
 					}
 					return null;
@@ -414,15 +391,10 @@ public class MessagePasser {
 					incomingMessage = (TimeStampedMessage) objectInput
 							.readObject();
 				} catch (Exception ex) {
-					System.err.println("failed to get incoming message - "
-							+ ex.getMessage());
 					if (objectInput != null) {
 						try {
 							objectInput.close();
 						} catch (Exception nestedEx) {
-							System.err
-									.println("failed to close object input stream - "
-											+ nestedEx);
 						}
 					}
 					return null;
@@ -438,7 +410,7 @@ public class MessagePasser {
 
 			// failure on creating server socket is a fatal error
 			if (serverSocket == null) {
-				System.err.println("cannot create server socket on "
+				System.out.println("cannot create server socket on "
 						+ self.getIP() + ":" + self.getPort());
 				return;
 			}
@@ -448,8 +420,6 @@ public class MessagePasser {
 				try {
 					clientSocket = serverSocket.accept();
 				} catch (IOException ex) {
-					System.err.println("failed to accept incoming request - "
-							+ ex.getMessage());
 					continue;
 				}
 

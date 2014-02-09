@@ -141,12 +141,12 @@ public class ConfigurationParser {
 				ETag = connection.getHeaderField("ETag");
 				configChanged = true;
 			} else if (responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
-				System.err
+				System.out
 						.println("unexpected HTTP responce code when downloading configuration file - "
 								+ responseCode);
 			}
 		} catch (Exception ex) {
-			System.err.println("failed to download configuration file - "
+			System.out.println("failed to download configuration file - "
 					+ ex.getMessage());
 		} finally {
 			if (bos != null) {
@@ -193,7 +193,7 @@ public class ConfigurationParser {
 		try {
 			is = new FileInputStream(configurationFileName);
 		} catch (IOException ex) {
-			System.err.println("failed to open configuration file - "
+			System.out.println("failed to open configuration file - "
 					+ ex.getMessage());
 		}
 
@@ -220,7 +220,7 @@ public class ConfigurationParser {
 							type = ClockService.ClockType.VECTOR;
 							System.out.println("clock service: vector");
 						} else {
-							System.err.println("invalid clock service type");
+							System.out.println("invalid clock service type");
 						}
 					} else {
 						String name = (String) map.get(CONTACT_NAME);
@@ -231,7 +231,7 @@ public class ConfigurationParser {
 					}
 				}
 				if (!contactMap.containsKey(localName)) {
-					System.err.println("local name " + localName
+					System.out.println("local name " + localName
 							+ " does not exist in the configuration file");
 					return null;
 				}

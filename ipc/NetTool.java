@@ -30,14 +30,10 @@ public class NetTool {
 			socket = new ServerSocket();
 			socket.bind(address);
 		} catch (Exception ex) {
-			System.err.println("failed to create server socket on " + IP + ":"
-					+ port + " - " + ex.getMessage());
 			if (socket != null) {
 				try {
 					socket.close();
 				} catch (Exception nestedEx) {
-					System.err.println("failed to close server socket on " + IP
-							+ ":" + port + " - " + nestedEx.getMessage());
 				}
 			}
 			return null;
@@ -59,14 +55,10 @@ public class NetTool {
 		try {
 			socket = new Socket(IP, port);
 		} catch (Exception ex) {
-			System.err.println("failed to create socket to " + IP + ":" + port
-					+ " - " + ex.getMessage());
 			if (socket != null) {
 				try {
 					socket.close();
 				} catch (Exception nestedEx) {
-					System.err.println("failed to close socket to " + IP + ":"
-							+ port + " - " + nestedEx.getMessage());
 				}
 			}
 			return null;
@@ -87,8 +79,6 @@ public class NetTool {
 		try {
 			socket.close();
 		} catch (Exception ex) {
-			System.err.println("failed to close server socket - "
-					+ ex.getMessage());
 		}
 	}
 
@@ -105,7 +95,6 @@ public class NetTool {
 		try {
 			socket.close();
 		} catch (Exception ex) {
-			System.err.println("failed to close socket - " + ex.getMessage());
 		}
 	}
 }

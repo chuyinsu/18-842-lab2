@@ -96,25 +96,9 @@ public class MulticastControlPanel {
 				String[] parsedLine = cmd.split("\\s+", MULTISEND_NUM_PARAM);
 				if (parsedLine.length == MULTISEND_NUM_PARAM
 						&& parsedLine[0].equals(MULTISEND_CMD)) {
-
-					// the application can only set the following parameters:
-					// 1) group name
-					// 2) kind
-					// 3) data
-					// 4) type (DATA)
-					// CORMulticast should take care of:
-					// 1) destination
-					// 2) sequence vector
-					// 3) type (other than DATA)
-					// MessagePasser takes care of:
-					// 1) source
-					// 2) sequence number
-					// 3) duplication
-					// 4) time stamp
 					MulticastMessage message = new MulticastMessage(localName,
 							parsedLine[1], parsedLine[2], parsedLine[3],
 							MulticastMessage.Type.DATA);
-
 					multicastService.send(message);
 				} else {
 					System.out.println("invalid command");
