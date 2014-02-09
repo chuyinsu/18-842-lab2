@@ -177,7 +177,7 @@ public class GroupManager {
 			// receive a TIMEOUT message from source, this means source
 			// did not receive the ACK
 			System.out
-					.println("Resend a message because the Type of the message received is TIMEOUT!");
+					.println("resending a message because the type of the message received is TIMEOUT");
 			message = new MulticastMessage(originalMessage.getGroupName(),
 					localName, from, originalMessage.getKind(),
 					new MulticastMessage(originalMessage), Type.ACK, null);
