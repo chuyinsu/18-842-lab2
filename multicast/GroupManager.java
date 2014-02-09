@@ -77,8 +77,8 @@ public class GroupManager {
 		for (String m : members) {
 			if (!m.equals(localName)) {
 				remainingNodes.add(m);
-				message.setDest(m);
-				mp.send(new MulticastMessage(message));
+				// message.setDest(m);
+				// mp.send(new MulticastMessage(message));
 			}
 		}
 
@@ -91,6 +91,14 @@ public class GroupManager {
 			lockForReliabilityQueue.unlock();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
+		}
+
+		for (String m : members) {
+			if (!m.equals(localName)) {
+				// remainingNodes.add(m);
+				message.setDest(m);
+				mp.send(new MulticastMessage(message));
+			}
 		}
 	}
 
@@ -131,20 +139,13 @@ public class GroupManager {
 		if (validRQElem == null) {
 
 			HashSet<String> remainingNodes = new HashSet<String>();
-
 			for (String m : members) {
 				if (!m.equals(localName)) {
 					if (!m.equals(from)) {
 						remainingNodes.add(m);
 					}
-					message = new MulticastMessage(
-							originalMessage.getGroupName(), localName, m,
-							originalMessage.getKind(), new MulticastMessage(
-									originalMessage), Type.ACK, null);
-					mp.send(message);
 				}
 			}
-
 			RQueueElement rqElem = new RQueueElement(remainingNodes,
 					System.currentTimeMillis(), originalMessage);
 			// acquire a lock here!
@@ -153,6 +154,18 @@ public class GroupManager {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+
+			for (String m : members) {
+				if (!m.equals(localName)) {
+					message = new MulticastMessage(
+							originalMessage.getGroupName(), localName, m,
+							originalMessage.getKind(), new MulticastMessage(
+									originalMessage), Type.ACK, null);
+					mp.send(message);
+				}
+			}
+
+			
 		} else {
 			HashSet<String> remainingNode = validRQElem.getRemainingNodes();
 			if (remainingNode.contains(from)) {

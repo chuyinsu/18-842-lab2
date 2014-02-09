@@ -5,7 +5,6 @@ import ipc.MessagePasser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.locks.ReentrantLock;
 
 import utils.ConfigurationParser;
 import utils.ConfigurationParser.ConfigInfo;
@@ -24,6 +23,7 @@ public class CORMulticast {
 	private static final String GROUP_NAME = "name";
 	private static final String GROUP_MEMBER = "members";
 	private static final long timeout = 10 * 1000;
+
 	// each group is represented as a HashMap, inside which key GROUP_NAME has
 	// the group's name as a String value, key GROUP_MEMBER has the group's
 	// members as an ArrayList<String> value
@@ -37,10 +37,9 @@ public class CORMulticast {
 	private ArrayList<GroupManager> groupManagers;
 
 	private String localName;
+
 	// deliverQueue is shared among all groups
 	private LinkedBlockingQueue<MulticastMessage> deliverQueue;
-
-	private final ReentrantLock lock = new ReentrantLock();
 
 	public CORMulticast(String configurationFileName, String localName,
 			ConfigInfo ci, ConfigurationParser cp) {
@@ -90,6 +89,7 @@ public class CORMulticast {
 			for (String member : nameToManager.get(groupName).getMembers()) {
 				if (member.equals(message.getSource())) {
 					isValidMember = true;
+					break;
 				}
 			}
 			if (isValidMember) {
