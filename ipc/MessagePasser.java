@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
+import multicast.MulticastMessage;
 import utils.ConfigurationParser;
 import utils.ConfigurationParser.ConfigInfo;
 import clock.ClockService;
@@ -191,14 +192,8 @@ public class MessagePasser {
 						delayBuffer.put(message);
 					} else if (action.equals(ACTION_DUPLICATE)) {
 						System.out.println("send duplicate rule matched");
-						TimeStampedMessage dup = new TimeStampedMessage(null,
-								null, null);
-						dup.setDest(dest);
-						dup.setKind(message.getKind());
-						dup.setData(message.getData());
-						dup.setSource(message.getSource());
-						dup.setSequenceNumber(message.getSequenceNumber());
-						dup.setTimeStamp(message.getTimeStamp());
+						MulticastMessage dup = new MulticastMessage(
+								(MulticastMessage) message);
 						dup.setDupe(true);
 						if (!sendMessage(clientSocket, message)) {
 							System.out.println("failed to send message - "
@@ -356,16 +351,8 @@ public class MessagePasser {
 						} else if (action.equals(ACTION_DUPLICATE)) {
 							System.out
 									.println("receive duplicate rule matched");
-							TimeStampedMessage dup = new TimeStampedMessage(
-									null, null, null);
-							dup.setDest(new String(message.getDest()));
-							dup.setKind(new String(message.getKind()));
-							dup.setData(message.getData());
-							dup.setSource(new String(message.getSource()));
-							dup.setSequenceNumber(message.getSequenceNumber());
-							dup.setDupe(message.isDupe());
-							dup.setTimeStamp(new TimeStamp(message
-									.getTimeStamp()));
+							MulticastMessage dup = new MulticastMessage(
+									(MulticastMessage) message);
 							receiveBuffer.put(message);
 							receiveBuffer.put(dup);
 							clearDelayBuffer();
