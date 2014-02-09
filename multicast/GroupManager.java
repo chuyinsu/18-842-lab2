@@ -79,16 +79,15 @@ public class GroupManager {
 		for (String m : members) {
 			if (!m.equals(localName)) {
 				remainingNodes.add(m);
-				// message.setDest(m);
-				// mp.send(new MulticastMessage(message));
 			}
 		}
-
+		
 		RQueueElement rqElem = new RQueueElement(remainingNodes,
 				System.currentTimeMillis(), originalMessage);
 		// acquire a lock here!
 		try {
 			lockForReliabilityQueue.lock();
+			System.out.println("message added to reliability queue in send method!");
 			reliabilityQueue.put(rqElem);
 			lockForReliabilityQueue.unlock();
 		} catch (InterruptedException e) {
@@ -137,9 +136,8 @@ public class GroupManager {
 				break;
 			}
 		}
-		lockForReliabilityQueue.unlock();
+		
 		if (validRQElem == null) {
-
 			HashSet<String> remainingNodes = new HashSet<String>();
 			for (String m : members) {
 				if (!m.equals(localName)) {
@@ -152,6 +150,7 @@ public class GroupManager {
 					System.currentTimeMillis(), originalMessage);
 			// acquire a lock here!
 			try {
+				//System.out.println("message added to reliability queue in checkReliabilityQueue method!");
 				reliabilityQueue.put(rqElem);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -163,6 +162,7 @@ public class GroupManager {
 							originalMessage.getGroupName(), localName, m,
 							originalMessage.getKind(), new MulticastMessage(
 									originalMessage), Type.ACK, null);
+					System.out.println("1");
 					mp.send(message);
 				}
 			}
@@ -174,14 +174,16 @@ public class GroupManager {
 			} else {
 				// receive a resending message from source, this means source
 				// did not receive the ACK
+				System.out.println("resend a message");
 				message = new MulticastMessage(originalMessage.getGroupName(),
 						localName, originalMessage.getSource(),
 						originalMessage.getKind(), new MulticastMessage(
 								originalMessage), Type.ACK, null);
+				System.out.println("2");
 				mp.send(message);
 			}
 		}
-
+		lockForReliabilityQueue.unlock();
 	}
 
 	public void checkTimeOut(long timeout, MessagePasser mp) {
@@ -189,7 +191,8 @@ public class GroupManager {
 		long curTime = System.currentTimeMillis();
 		for (RQueueElement rqElem : reliabilityQueue) {
 			// resend
-			if (curTime - rqElem.getReceivedTime() >= 0) {
+			if (curTime - rqElem.getReceivedTime() >= timeout) {
+				rqElem.setReceivedTime(curTime);
 				// message is organic from this node
 				MulticastMessage message;
 				MulticastMessage originalMessage = rqElem.getMessage();
@@ -203,6 +206,7 @@ public class GroupManager {
 							originalMessage.getKind(), new MulticastMessage(
 									originalMessage), Type.ACK, null);
 				}
+				System.out.println("Timeout: " + message);
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
 					mp.send(message);
@@ -242,6 +246,7 @@ public class GroupManager {
 			if (checkCasualOrder(message, sourceMemberId)) {
 				try {
 					seqVector[sourceMemberId]++;
+					System.out.println("put message into deliver queue:" + message);
 					deliverQueue.put(message);
 					itrMessage.remove();
 				} catch (InterruptedException e) {

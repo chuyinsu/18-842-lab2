@@ -52,8 +52,7 @@ public class MulticastMessage extends TimeStampedMessage {
 	public String toString() {
 		return "[src] " + getSource() + " [dst] " + getDest() + " [kind] "
 				+ getKind() + " [seq] " + getSequenceNumber() + " [dup] "
-				+ (isDupe() ? "true" : "false") + " [time] "
-				+ getTimeStamp().toString() + " [multicast_seq_vector] "
+				+ (isDupe() ? "true" : "false")  + " [multicast_seq_vector] "
 				+ Arrays.toString(seqVector) + " [data] "
 				+ getData().toString();
 	}

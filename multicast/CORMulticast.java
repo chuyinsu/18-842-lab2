@@ -122,6 +122,7 @@ public class CORMulticast {
 				// need acquire a lock for mp?
 				MulticastMessage message = (MulticastMessage) messagePasser
 						.receive();
+				System.out.println("Received a message!");
 				String groupName = message.getGroupName();
 				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager
 						.get(groupName) : null;
@@ -141,7 +142,7 @@ public class CORMulticast {
 				// need acquire a lock for gms?
 				for (GroupManager gm : groupManagers) {
 					gm.checkReceivedMessage(deliverQueue);
-					gm.checkTimeOut(timeout, messagePasser);
+					//gm.checkTimeOut(timeout, messagePasser);
 				}
 			}
 		}
