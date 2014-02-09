@@ -97,7 +97,6 @@ public class GroupManager {
 
 		for (String m : members) {
 			if (!m.equals(localName)) {
-				// remainingNodes.add(m);
 				message.setDest(m);
 				mp.send(new MulticastMessage(message));
 			}
@@ -114,10 +113,11 @@ public class GroupManager {
 
 	public void checkReliabilityQueue(MulticastMessage message, MessagePasser mp) {
 		MulticastMessage originalMessage;
+		Type type = message.getType();
 		String from = message.getSource();
-		if (message.getType() == Type.DATA) {
+		if (type == Type.DATA) {
 			originalMessage = message;
-		} else if (message.getType() == Type.ACK) {
+		} else if (type == Type.ACK || type == Type.TIMEOUT) {
 			originalMessage = (MulticastMessage) message.getData();
 		} else {
 			// invalid message
@@ -139,31 +139,30 @@ public class GroupManager {
 		}
 
 		if (validRQElem == null) {
-			HashSet<String> remainingNodes = new HashSet<String>();
-			for (String m : members) {
-				if (!m.equals(localName)) {
-					if (!m.equals(from)) {
-						remainingNodes.add(m);
+			if (!IsAlreadyReceived(message)) {
+				HashSet<String> remainingNodes = new HashSet<String>();
+				for (String m : members) {
+					if (!m.equals(localName)) {
+						if (!m.equals(from)) {
+							remainingNodes.add(m);
+						}
 					}
 				}
-			}
-			RQueueElement rqElem = new RQueueElement(remainingNodes,
-					System.currentTimeMillis(), originalMessage);
-			// acquire a lock here!
-			try {
-				// System.out.println("message added to reliability queue in checkReliabilityQueue method!");
-				reliabilityQueue.put(rqElem);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			for (String m : members) {
-				if (!m.equals(localName)) {
-					message = new MulticastMessage(
-							originalMessage.getGroupName(), localName, m,
-							originalMessage.getKind(), new MulticastMessage(
-									originalMessage), Type.ACK, null);
-					mp.send(message);
+				RQueueElement rqElem = new RQueueElement(remainingNodes,
+						System.currentTimeMillis(), originalMessage);
+				try {
+					reliabilityQueue.put(rqElem);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				for (String m : members) {
+					if (!m.equals(localName)) {
+						message = new MulticastMessage(
+								originalMessage.getGroupName(), localName, m,
+								originalMessage.getKind(), new MulticastMessage(
+										originalMessage), Type.ACK, null);
+						mp.send(message);
+					}
 				}
 			}
 
@@ -171,16 +170,16 @@ public class GroupManager {
 			HashSet<String> remainingNode = validRQElem.getRemainingNodes();
 			if (remainingNode.contains(from)) {
 				remainingNode.remove(from);
-			} else {
-				// receive a resending message from source, this means source
-				// did not receive the ACK
-				System.out.println("resend a message");
-				message = new MulticastMessage(originalMessage.getGroupName(),
-						localName, originalMessage.getSource(),
-						originalMessage.getKind(), new MulticastMessage(
-								originalMessage), Type.ACK, null);
-				mp.send(message);
-			}
+			} 
+		}
+		if (type == Type.TIMEOUT) {
+			// receive a TIMEOUT message from source, this means source
+			// did not receive the ACK
+			System.out.println("Resend a message because the Type of the message received is TIMEOUT!");
+			message = new MulticastMessage(originalMessage.getGroupName(),
+					localName, from, originalMessage.getKind(), 
+					new MulticastMessage(originalMessage), Type.ACK, null);
+			mp.send(message);
 		}
 		lockForReliabilityQueue.unlock();
 	}
@@ -270,11 +269,24 @@ public class GroupManager {
 	}
 	
 	private boolean IsAlreadyReceived(MulticastMessage message) {
+		boolean isDeliverd = true;
 		for (int i = 0; i < seqVector.length; i++) {
 			if (message.getSeqVector()[i] > seqVector[i]) {
-				return false;
+				isDeliverd = false;
+				break;
 			}
 		}
-		return true;
+		if (isDeliverd) {
+			return true;
+		} else {
+			// check casual ordering queue;
+			for (MulticastMessage m : casualOrderingQueue) {
+				if (message.getSource().equals(m.getSource())
+						&& Arrays.equals(message.getSeqVector(), m.getSeqVector())) {
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

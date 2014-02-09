@@ -8,7 +8,7 @@ public class MulticastMessage extends TimeStampedMessage {
 	private static final long serialVersionUID = -6266905058526960435L;
 
 	public enum Type {
-		DATA, ACK, INQUIRE, CONFIRM
+		DATA, ACK, TIMEOUT
 	}
 
 	// which group this message belongs to
