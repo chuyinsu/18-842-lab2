@@ -130,7 +130,7 @@ public class GroupManager {
 			String src = rqElem.getMessage().getSource();
 			int[] vector = rqElem.getMessage().getSeqVector();
 			if (src.equals(originalMessage.getSource())
-					&& vector.equals(originalMessage.getSeqVector())) {
+					&& Arrays.equals(vector, originalMessage.getSeqVector())) {
 				// already receive the message from other node
 				validRQElem = rqElem;
 				break;

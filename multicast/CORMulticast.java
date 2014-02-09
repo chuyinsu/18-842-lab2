@@ -142,7 +142,7 @@ public class CORMulticast {
 				// need acquire a lock for gms?
 				for (GroupManager gm : groupManagers) {
 					gm.checkReceivedMessage(deliverQueue);
-					//gm.checkTimeOut(timeout, messagePasser);
+					gm.checkTimeOut(timeout, messagePasser);
 				}
 			}
 		}
