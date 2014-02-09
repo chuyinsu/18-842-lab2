@@ -58,9 +58,13 @@ public class TimeStamp implements Serializable, Comparable<TimeStamp> {
 		this.type = timeStamp.type;
 		this.localNodeId = timeStamp.localNodeId;
 		this.logical = timeStamp.logical;
-		this.vector = new int[timeStamp.vector.length];
-		for (int i = 0; i < this.vector.length; i++) {
-			(this.vector)[i] = (timeStamp.vector)[i];
+		if (timeStamp.vector != null) {
+			this.vector = new int[timeStamp.vector.length];
+			for (int i = 0; i < this.vector.length; i++) {
+				(this.vector)[i] = (timeStamp.vector)[i];
+			}
+		} else {
+			this.vector = null;
 		}
 	}
 

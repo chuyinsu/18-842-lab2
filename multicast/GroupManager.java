@@ -165,7 +165,6 @@ public class GroupManager {
 				}
 			}
 
-			
 		} else {
 			HashSet<String> remainingNode = validRQElem.getRemainingNodes();
 			if (remainingNode.contains(from)) {
