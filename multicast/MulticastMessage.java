@@ -44,7 +44,8 @@ public class MulticastMessage extends TimeStampedMessage {
 	public MulticastMessage(MulticastMessage message) {
 		super(message);
 		this.groupName = message.groupName;
-		this.seqVector = message.seqVector.clone();
+		this.seqVector = message.seqVector == null ? null : message.seqVector
+				.clone();
 		this.type = message.type;
 	}
 
@@ -52,7 +53,7 @@ public class MulticastMessage extends TimeStampedMessage {
 	public String toString() {
 		return "[src] " + getSource() + " [dst] " + getDest() + " [kind] "
 				+ getKind() + " [seq] " + getSequenceNumber() + " [dup] "
-				+ (isDupe() ? "true" : "false")  + " [multicast_seq_vector] "
+				+ (isDupe() ? "true" : "false") + " [multicast_seq_vector] "
 				+ Arrays.toString(seqVector) + " [data] "
 				+ getData().toString();
 	}

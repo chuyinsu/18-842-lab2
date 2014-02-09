@@ -95,11 +95,11 @@ public class CORMulticast {
 			if (isValidMember) {
 				nameToManager.get(groupName).send(message, this.messagePasser);
 			} else {
-				System.out.println("User:" + message.getSource()
-						+ " does not belong to this group!");
+				System.out.println("user (" + message.getSource()
+						+ ") does not belong to this group");
 			}
 		} else {
-			System.out.println("Group Name:" + groupName + " does not exist!");
+			System.out.println("group name (" + groupName + ") does not exist");
 		}
 	}
 
@@ -122,7 +122,8 @@ public class CORMulticast {
 				// need acquire a lock for mp?
 				MulticastMessage message = (MulticastMessage) messagePasser
 						.receive();
-				System.out.println("Received a message: " + message);
+				System.out
+						.println("CORMulticast - message received from MessagePasser");
 				String groupName = message.getGroupName();
 				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager
 						.get(groupName) : null;

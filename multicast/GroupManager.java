@@ -88,7 +88,7 @@ public class GroupManager {
 		try {
 			lockForReliabilityQueue.lock();
 			System.out
-					.println("message added to reliability queue in send method!");
+					.println("message added to reliability queue in send method");
 			reliabilityQueue.put(rqElem);
 			lockForReliabilityQueue.unlock();
 		} catch (InterruptedException e) {
@@ -198,7 +198,7 @@ public class GroupManager {
 						originalMessage.getSource(), originalMessage.getDest(),
 						"timeout", new MulticastMessage(originalMessage),
 						Type.ACK, null);
-				System.out.println("Timeout: " + message);
+				System.out.println("timeout - " + message);
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
 					mp.send(message);
@@ -222,9 +222,10 @@ public class GroupManager {
 				try {
 					System.out.println("put message into causal ordering queue:" + rqElem.getMessage());
 					casualOrderingQueue.put(rqElem.getMessage());
+					System.out.println("message added to casuality queue - "
+							+ rqElem.getMessage());
 					itrRQElem.remove();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -239,12 +240,11 @@ public class GroupManager {
 			if (checkCasualOrder(message, sourceMemberId)) {
 				try {
 					seqVector[sourceMemberId]++;
-					System.out.println("put message into deliver queue:"
-							+ message);
 					deliverQueue.put(message);
+					System.out.println("message added to deliver queue - "
+							+ message);
 					itrMessage.remove();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
