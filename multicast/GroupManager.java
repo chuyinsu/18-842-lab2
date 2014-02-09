@@ -162,7 +162,6 @@ public class GroupManager {
 							originalMessage.getGroupName(), localName, m,
 							originalMessage.getKind(), new MulticastMessage(
 									originalMessage), Type.ACK, null);
-					System.out.println("1");
 					mp.send(message);
 				}
 			}
@@ -179,7 +178,6 @@ public class GroupManager {
 						localName, originalMessage.getSource(),
 						originalMessage.getKind(), new MulticastMessage(
 								originalMessage), Type.ACK, null);
-				System.out.println("2");
 				mp.send(message);
 			}
 		}
@@ -228,6 +226,7 @@ public class GroupManager {
 			RQueueElement rqElem = itrRQElem.next();
 			if (rqElem.getRemainingNodes().isEmpty()) {
 				try {
+					System.out.println("put message into causal ordering queue:" + rqElem.getMessage());
 					casualOrderingQueue.put(rqElem.getMessage());
 					itrRQElem.remove();
 				} catch (InterruptedException e) {
@@ -269,6 +268,15 @@ public class GroupManager {
 				if (message.getSeqVector()[i] != seqVector[i] + 1) {
 					return false;
 				}
+			}
+		}
+		return true;
+	}
+	
+	private boolean IsAlreadyReceived(MulticastMessage message) {
+		for (int i = 0; i < seqVector.length; i++) {
+			if (message.getSeqVector()[i] > seqVector[i]) {
+				return false;
 			}
 		}
 		return true;

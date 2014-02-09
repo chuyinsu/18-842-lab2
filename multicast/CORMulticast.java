@@ -122,7 +122,7 @@ public class CORMulticast {
 				// need acquire a lock for mp?
 				MulticastMessage message = (MulticastMessage) messagePasser
 						.receive();
-				System.out.println("Received a message!");
+				System.out.println("Received a message: " + message);
 				String groupName = message.getGroupName();
 				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager
 						.get(groupName) : null;
