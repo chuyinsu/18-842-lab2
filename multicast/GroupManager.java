@@ -189,7 +189,7 @@ public class GroupManager {
 		long curTime = System.currentTimeMillis();
 		for (RQueueElement rqElem : reliabilityQueue) {
 			// resend
-			if (curTime - rqElem.getReceivedTime() >= 0) {
+			if (curTime - rqElem.getReceivedTime() >= timeout) {
 				// message is organic from this node
 				MulticastMessage message;
 				MulticastMessage originalMessage = rqElem.getMessage();
