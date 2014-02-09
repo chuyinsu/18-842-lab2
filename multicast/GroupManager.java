@@ -81,13 +81,14 @@ public class GroupManager {
 				remainingNodes.add(m);
 			}
 		}
-		
+
 		RQueueElement rqElem = new RQueueElement(remainingNodes,
 				System.currentTimeMillis(), originalMessage);
 		// acquire a lock here!
 		try {
 			lockForReliabilityQueue.lock();
-			System.out.println("message added to reliability queue in send method!");
+			System.out
+					.println("message added to reliability queue in send method!");
 			reliabilityQueue.put(rqElem);
 			lockForReliabilityQueue.unlock();
 		} catch (InterruptedException e) {
@@ -136,7 +137,7 @@ public class GroupManager {
 				break;
 			}
 		}
-		
+
 		if (validRQElem == null) {
 			HashSet<String> remainingNodes = new HashSet<String>();
 			for (String m : members) {
@@ -150,7 +151,7 @@ public class GroupManager {
 					System.currentTimeMillis(), originalMessage);
 			// acquire a lock here!
 			try {
-				//System.out.println("message added to reliability queue in checkReliabilityQueue method!");
+				// System.out.println("message added to reliability queue in checkReliabilityQueue method!");
 				reliabilityQueue.put(rqElem);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -194,16 +195,10 @@ public class GroupManager {
 				// message is organic from this node
 				MulticastMessage message;
 				MulticastMessage originalMessage = rqElem.getMessage();
-				if (localName.equals(originalMessage.getSource())) {
-					message = new MulticastMessage(rqElem.getMessage());
-				} else {
-					message = new MulticastMessage(
-							originalMessage.getGroupName(),
-							originalMessage.getSource(),
-							originalMessage.getDest(),
-							originalMessage.getKind(), new MulticastMessage(
-									originalMessage), Type.ACK, null);
-				}
+				message = new MulticastMessage(originalMessage.getGroupName(),
+						originalMessage.getSource(), originalMessage.getDest(),
+						"timeout", new MulticastMessage(originalMessage),
+						Type.ACK, null);
 				System.out.println("Timeout: " + message);
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
@@ -245,7 +240,8 @@ public class GroupManager {
 			if (checkCasualOrder(message, sourceMemberId)) {
 				try {
 					seqVector[sourceMemberId]++;
-					System.out.println("put message into deliver queue:" + message);
+					System.out.println("put message into deliver queue:"
+							+ message);
 					deliverQueue.put(message);
 					itrMessage.remove();
 				} catch (InterruptedException e) {
