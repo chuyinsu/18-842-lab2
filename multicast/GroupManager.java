@@ -159,8 +159,9 @@ public class GroupManager {
 					if (!m.equals(localName)) {
 						message = new MulticastMessage(
 								originalMessage.getGroupName(), localName, m,
-								originalMessage.getKind(), new MulticastMessage(
-										originalMessage), Type.ACK, null);
+								originalMessage.getKind(),
+								new MulticastMessage(originalMessage),
+								Type.ACK, null);
 						mp.send(message);
 					}
 				}
@@ -170,14 +171,15 @@ public class GroupManager {
 			HashSet<String> remainingNode = validRQElem.getRemainingNodes();
 			if (remainingNode.contains(from)) {
 				remainingNode.remove(from);
-			} 
+			}
 		}
 		if (type == Type.TIMEOUT) {
 			// receive a TIMEOUT message from source, this means source
 			// did not receive the ACK
-			System.out.println("Resend a message because the Type of the message received is TIMEOUT!");
+			System.out
+					.println("Resend a message because the Type of the message received is TIMEOUT!");
 			message = new MulticastMessage(originalMessage.getGroupName(),
-					localName, from, originalMessage.getKind(), 
+					localName, from, originalMessage.getKind(),
 					new MulticastMessage(originalMessage), Type.ACK, null);
 			mp.send(message);
 		}
@@ -220,7 +222,6 @@ public class GroupManager {
 			RQueueElement rqElem = itrRQElem.next();
 			if (rqElem.getRemainingNodes().isEmpty()) {
 				try {
-					System.out.println("put message into causal ordering queue:" + rqElem.getMessage());
 					casualOrderingQueue.put(rqElem.getMessage());
 					System.out.println("message added to casuality queue - "
 							+ rqElem.getMessage());
@@ -267,7 +268,7 @@ public class GroupManager {
 		}
 		return true;
 	}
-	
+
 	private boolean IsAlreadyReceived(MulticastMessage message) {
 		boolean isDeliverd = true;
 		for (int i = 0; i < seqVector.length; i++) {
@@ -282,7 +283,8 @@ public class GroupManager {
 			// check casual ordering queue;
 			for (MulticastMessage m : casualOrderingQueue) {
 				if (message.getSource().equals(m.getSource())
-						&& Arrays.equals(message.getSeqVector(), m.getSeqVector())) {
+						&& Arrays.equals(message.getSeqVector(),
+								m.getSeqVector())) {
 					return true;
 				}
 			}
