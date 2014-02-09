@@ -21,7 +21,7 @@ public class GroupManager {
 	private ArrayList<String> members;
 	private HashMap<String, Integer> memberNameToId;
 	private int[] seqVector;
-	private int[] recvVector;
+	private int sendCounter;
 
 	private final ReentrantLock lockForReliabilityQueue = new ReentrantLock();
 	private final ReentrantLock lockForcCasualOrderingQueue = new ReentrantLock();
@@ -34,7 +34,7 @@ public class GroupManager {
 		this.reliabilityQueue = new LinkedBlockingQueue<RQueueElement>();
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.seqVector = seqVector;
-		this.recvVector = Arrays.copyOf(seqVector, seqVector.length);
+		this.sendCounter = 0;
 		this.id = id;
 		this.members = members;
 		this.memberNameToId = memberNameToId;
@@ -67,9 +67,11 @@ public class GroupManager {
 	}
 
 	public void send(MulticastMessage message, MessagePasser mp) {
-		// increase seqVector
-		seqVector[memberNameToId.get(localName)]++;
-		message.setSeqVector(Arrays.copyOf(seqVector, seqVector.length));
+		// increase send counter
+		sendCounter++;
+		int[] copyOfVector = Arrays.copyOf(seqVector, seqVector.length);
+		copyOfVector[memberNameToId.get(localName)] = sendCounter;
+		message.setSeqVector(copyOfVector);
 
 		MulticastMessage originalMessage = new MulticastMessage(message);
 		HashSet<String> remainingNodes = new HashSet<String>();
@@ -237,9 +239,9 @@ public class GroupManager {
 		while (itrMessage.hasNext()) {
 			MulticastMessage message = itrMessage.next();
 			int sourceMemberId = memberNameToId.get(message.getSource());
-			if (message.getSeqVector()[sourceMemberId] == recvVector[sourceMemberId] + 1) {
-				recvVector[sourceMemberId]++;
+			if (checkCasualOrder(message, sourceMemberId)) {
 				try {
+					seqVector[sourceMemberId]++;
 					deliverQueue.put(message);
 					itrMessage.remove();
 				} catch (InterruptedException e) {
@@ -249,5 +251,21 @@ public class GroupManager {
 			}
 		}
 		lockForcCasualOrderingQueue.unlock();
+	}
+
+	private boolean checkCasualOrder(MulticastMessage message,
+			int sourceMemberId) {
+		for (int i = 0; i < seqVector.length; i++) {
+			if (i != sourceMemberId) {
+				if (message.getSeqVector()[i] > seqVector[i]) {
+					return false;
+				}
+			} else {
+				if (message.getSeqVector()[i] != seqVector[i] + 1) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 }
