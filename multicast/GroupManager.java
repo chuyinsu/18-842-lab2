@@ -151,6 +151,7 @@ public class GroupManager {
 				RQueueElement rqElem = new RQueueElement(remainingNodes,
 						System.currentTimeMillis(), originalMessage);
 				try {
+					System.out.println("message added to reliability queue");
 					reliabilityQueue.put(rqElem);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
