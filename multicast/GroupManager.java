@@ -197,10 +197,8 @@ public class GroupManager {
 				// message is organic from this node
 				MulticastMessage message;
 				MulticastMessage originalMessage = rqElem.getMessage();
-				message = new MulticastMessage(originalMessage.getGroupName(),
-						originalMessage.getSource(), originalMessage.getDest(),
-						"timeout", new MulticastMessage(originalMessage),
-						Type.ACK, null);
+				message = new MulticastMessage(localName, originalMessage.getGroupName(),
+						"timeout", new MulticastMessage(originalMessage),Type.TIMEOUT);
 				System.out.println("timeout - " + message);
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
