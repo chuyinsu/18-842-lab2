@@ -48,7 +48,6 @@ public class MulticastControlPanel {
 				MulticastMessage message = multicastService.receive();
 				System.out.println("message delivered to local node - "
 						+ message.toString());
-				System.out.println("*****");
 			}
 		}
 	}
