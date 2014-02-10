@@ -198,10 +198,10 @@ public class GroupManager {
 				message = new MulticastMessage(localName,
 						originalMessage.getGroupName(), "timeout",
 						new MulticastMessage(originalMessage), Type.TIMEOUT);
-				System.out.println("timeout - " + message);
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
 					mp.send(message);
+					System.out.println("timeout - " + message);
 				}
 			}
 		}
