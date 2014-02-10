@@ -119,7 +119,6 @@ public class CORMulticast {
 		@Override
 		public void run() {
 			while (true) {
-				// need acquire a lock for mp?
 				MulticastMessage message = (MulticastMessage) messagePasser
 						.receive();
 				System.out
@@ -140,7 +139,6 @@ public class CORMulticast {
 		@Override
 		public void run() {
 			while (true) {
-				// need acquire a lock for gms?
 				for (GroupManager gm : groupManagers) {
 					gm.checkReceivedMessage(deliverQueue);
 					gm.checkTimeOut(timeout, messagePasser);
