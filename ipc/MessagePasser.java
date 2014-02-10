@@ -178,6 +178,8 @@ public class MessagePasser {
 					// match rules before sending
 					String action = checkRules(message, sendRules);
 					if (action == null) {
+						System.out.println("MessagePasser send message - "
+								+ message.toString());
 						if (!sendMessage(clientSocket, message)) {
 							socketMap.remove(dest);
 						}
@@ -193,11 +195,15 @@ public class MessagePasser {
 						MulticastMessage dup = new MulticastMessage(
 								(MulticastMessage) message);
 						dup.setDupe(true);
+						System.out.println("MessagePasser send message - "
+								+ message.toString());
 						if (!sendMessage(clientSocket, message)) {
 							System.out.println("failed to send message - "
 									+ message.toString());
 							socketMap.remove(dest);
 						}
+						System.out.println("MessagePasser send message - "
+								+ message.toString());
 						if (!sendMessage(clientSocket, dup)) {
 							System.out.println("failed to send message - "
 									+ message.toString());
@@ -220,6 +226,9 @@ public class MessagePasser {
 			while (!delayBuffer.isEmpty()) {
 				try {
 					TimeStampedMessage message = delayBuffer.take();
+					System.out
+							.println("MessagePasser send from delay buffer - "
+									+ message.toString());
 					if (!sendMessage(clientSocket, message)) {
 						System.out.println("failed to send message - "
 								+ message.toString());

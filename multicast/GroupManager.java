@@ -13,7 +13,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import multicast.MulticastMessage.Type;
 
 public class GroupManager {
-	private int id;
 	private String name; // groupName
 	private String localName; // node name
 	private LinkedBlockingQueue<RQueueElement> reliabilityQueue;
@@ -35,7 +34,6 @@ public class GroupManager {
 		this.casualOrderingQueue = new LinkedBlockingQueue<MulticastMessage>();
 		this.seqVector = seqVector;
 		this.sendCounter = 0;
-		this.id = id;
 		this.members = members;
 		this.memberNameToId = memberNameToId;
 	}
@@ -197,8 +195,9 @@ public class GroupManager {
 				// message is organic from this node
 				MulticastMessage message;
 				MulticastMessage originalMessage = rqElem.getMessage();
-				message = new MulticastMessage(localName, originalMessage.getGroupName(),
-						"timeout", new MulticastMessage(originalMessage),Type.TIMEOUT);
+				message = new MulticastMessage(localName,
+						originalMessage.getGroupName(), "timeout",
+						new MulticastMessage(originalMessage), Type.TIMEOUT);
 				System.out.println("timeout - " + message);
 				for (String name : rqElem.getRemainingNodes()) {
 					message.setDest(name);
