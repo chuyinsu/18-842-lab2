@@ -183,7 +183,7 @@ public class MessagePasser {
 						if (!sendMessage(clientSocket, message)) {
 							socketMap.remove(dest);
 						}
-						clearDelayBuffer(clientSocket);
+						clearSenderDelayBuffer();
 					} else if (action.equals(ACTION_DROP)) {
 						System.out.println("send drop rule matched");
 						continue;
@@ -209,7 +209,7 @@ public class MessagePasser {
 									+ message.toString());
 							socketMap.remove(dest);
 						}
-						clearDelayBuffer(clientSocket);
+						clearSenderDelayBuffer();
 					}
 				} catch (InterruptedException ex) {
 				}
@@ -222,13 +222,14 @@ public class MessagePasser {
 		 * @param clientSocket
 		 *            The socket to the remote side.
 		 */
-		private void clearDelayBuffer(Socket clientSocket) {
+		private void clearSenderDelayBuffer() {
 			while (!delayBuffer.isEmpty()) {
 				try {
 					TimeStampedMessage message = delayBuffer.take();
 					System.out
 							.println("MessagePasser send from delay buffer - "
 									+ message.toString());
+					Socket clientSocket = socketMap.get(message.getDest());
 					if (!sendMessage(clientSocket, message)) {
 						System.out.println("failed to send message - "
 								+ message.toString());
@@ -332,7 +333,7 @@ public class MessagePasser {
 					try {
 						if (action == null) {
 							receiveBuffer.put(message);
-							clearDelayBuffer();
+							clearReceiverDelayBuffer();
 						} else if (action.equals(ACTION_DROP)) {
 							System.out.println("receive drop rule matched");
 							continue;
@@ -348,7 +349,7 @@ public class MessagePasser {
 									(MulticastMessage) message);
 							receiveBuffer.put(message);
 							receiveBuffer.put(dup);
-							clearDelayBuffer();
+							clearReceiverDelayBuffer();
 						}
 					} catch (InterruptedException ex) {
 					}
@@ -358,7 +359,7 @@ public class MessagePasser {
 			/*
 			 * Upon each receiving, clear delay buffer.
 			 */
-			private void clearDelayBuffer() {
+			private void clearReceiverDelayBuffer() {
 				try {
 					delayBufferLock.lock();
 					while (!delayBuffer.isEmpty()) {
