@@ -123,7 +123,7 @@ public class CORMulticast {
 				MulticastMessage message = (MulticastMessage) messagePasser
 						.receive();
 				System.out
-						.println("CORMulticast - message received from MessagePasser");
+						.println("CORMulticast - message received from MessagePasser - " + message);
 				String groupName = message.getGroupName();
 				GroupManager gm = nameToManager.containsKey(groupName) ? nameToManager
 						.get(groupName) : null;

@@ -88,7 +88,7 @@ public class GroupManager {
 		try {
 			lockForReliabilityQueue.lock();
 			System.out
-					.println("message added to reliability queue in send method");
+					.println("message added to reliability queue - " + originalMessage);
 			reliabilityQueue.put(rqElem);
 			lockForReliabilityQueue.unlock();
 		} catch (InterruptedException e) {
@@ -151,7 +151,7 @@ public class GroupManager {
 				RQueueElement rqElem = new RQueueElement(remainingNodes,
 						System.currentTimeMillis(), originalMessage);
 				try {
-					System.out.println("message added to reliability queue");
+					System.out.println("message added to reliability queue - " + originalMessage);
 					reliabilityQueue.put(rqElem);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
